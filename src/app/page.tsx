@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Linkedin, Mail, Twitter, Globe, Download } from "lucide-react";
+import {
+  Github,
+  Linkedin,
+  Mail,
+  Twitter,
+  Globe,
+  Download,
+  ArrowRight,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,9 +115,9 @@ export default function Home() {
           combined with enterprise-grade practices across frontend, backend and
           infrastructure. Experienced mentor and architect who drives code
           reviews, cross-team collaboration and architecture decisions to ensure
-          maintainability and reliability. Current Sr. Developer at Srijan,
-          providing a solid platform for technical leadership and delivery
-          rather than a founder-focused profile.
+          maintainability and reliability. Currently a Senior Software Developer
+          at Material+, providing a solid platform for technical leadership and
+          delivery rather than a founder-focused profile.
         </p>
       </section>
 
@@ -424,6 +432,13 @@ export default function Home() {
               </CardContent>
             </Card>
           </Link>
+        </div>
+        <div className="flex justify-center mt-6">
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/projects">
+              View All Projects <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 

@@ -20,36 +20,50 @@ const item = {
 
 const experiences = [
   {
-    company: "Srijan Technologies (A Material+ Company)",
-    role: "Senior JavaScript Developer",
-    period: "Jan '21 — Present",
+    company: "Material+",
+    role: "Senior Software Developer - L2",
+    period: "Oct '22 — Present",
     description:
-      "Leading development of high-impact web applications using React, Next.js, and TypeScript. Mentoring junior developers and performing code reviews.",
-    skills: ["React", "Next.js", "TypeScript", "Performance"],
+      "Led architecture and optimization of large-scale MERN + Fastify systems. Built high-volume data pipelines, optimized APIs, and managed Kubernetes deployments.",
+    skills: [
+      "MERN Stack",
+      "Fastify",
+      "Kubernetes",
+      "Redis",
+      "System Architecture",
+    ],
+  },
+  {
+    company: "Srijan Technologies",
+    role: "Senior JavaScript Developer - L1",
+    period: "Jan '22 — Oct '22",
+    description:
+      "Built and maintained services in MERN with Fastify. Monitored services using Dynatrace and wrote Kubernetes consumers for scalable deployments.",
+    skills: ["React", "Node.js", "Dynatrace", "Microservices"],
   },
   {
     company: "Jai Infoway",
     role: "Web Developer",
     period: "Jan '21 — Jan '22",
     description:
-      "Delivered responsive, custom-built ReactJS interfaces. Owned end-to-end delivery process.",
-    skills: ["ReactJS", "UI/UX"],
+      "Delivered responsive, custom-built ReactJS interfaces. Built multi-product booking platforms and microservice-based backends on AWS EC2.",
+    skills: ["ReactJS", "Redux", "AWS EC2", "PostgreSQL"],
   },
   {
-    company: "Freelance",
-    role: "Web Developer",
+    company: "Freelancer.com",
+    role: "Freelance Web Developer",
     period: "Jun '20 — Jan '21",
     description:
-      "Developed reusable UI components and design systems. Translated Figma designs into pixel-perfect interfaces.",
-    skills: ["ReactJS", "Figma"],
+      "Developed digital event websites and interactive components. Integrated APIs and implemented secure authentication flows.",
+    skills: ["ReactJS", "API Integration", "Authentication"],
   },
   {
     company: "OLSO Rental",
     role: "Frontend Web Developer",
     period: "Nov '19 — Jun '20",
     description:
-      "Contributed to financial operations tools. Resolved bugs and maintained code quality.",
-    skills: ["Frontend", "Testing"],
+      "Built scalable, high-performance UIs using React.js and Redux. Integrated REST APIs and ensured cross-browser compatibility.",
+    skills: ["React.js", "Redux", "Material UI", "HTML5/CSS3"],
   },
 ];
 
@@ -67,9 +81,9 @@ export default function AboutPage() {
             About Me
           </h1>
           <p className="text-lg text-muted-foreground">
-            I'm a Senior Full-Stack JavaScript leader based in Jharkhand, India,
-            with 5+ years of experience delivering scalable, high-performance
-            web applications.
+            I&apos;m a Senior Full-Stack JavaScript leader based in Jharkhand,
+            India, with 5+ years of experience delivering scalable,
+            high-performance web applications.
           </p>
         </motion.div>
 
@@ -116,12 +130,12 @@ export default function AboutPage() {
           </h2>
           <div>
             <h3 className="text-xl font-bold">
-              Bachelor's Degree in Computer Applications
+              Bachelor&apos;s Degree in Computer Applications
             </h3>
             <p className="text-muted-foreground">
               DSPMU, Ranchi, India (GPA: 8.8)
             </p>
-            <span className="text-sm text-muted-foreground">Jan '22</span>
+            <span className="text-sm text-muted-foreground">Jan &apos;22</span>
           </div>
         </motion.div>
       </motion.div>

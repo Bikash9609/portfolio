@@ -1,0 +1,90 @@
+---
+title: "Building Webrat: Bringing Trust Back to the Web"
+date: "2026-01-05"
+description: "How I built a community-driven Chrome extension to crowdsource website safety ratings using React 19, Tailwind v4, and Node.js. A deep dive into avoiding scams and building decentralized trust."
+---
+
+# Building Webrat: Bringing Trust Back to the Web
+
+The internet is moving faster than security filters. Every day, new scam sites, dropshipping frauds, and phishing pages pop up, looking entirely legitimate. Traditional antivirus tools catch code-based malware, but they often miss **human-based risks**: deceptive practices, poor customer service, and misleading "too good to be true" offers.
+
+That's why I built **Webrat**.
+
+<div className="my-8">
+  <img
+    src="/projects/webrat/1.png"
+    alt="Webrat Interface"
+    className="rounded-xl border border-border shadow-2xl w-full"
+  />
+  <p className="text-center text-sm text-muted-foreground mt-2">
+    Webrat's clean interface showing community ratings.
+  </p>
+</div>
+
+## The Mission: Crowdsourcing Safety
+
+Webrat is a **Chrome Extension** that acts as a companion for your browsing. It allows users to:
+
+- **Rate websites** (1-5 stars) based on safety and trust.
+- **Read reviews** from real people before making a purchase.
+- **Get instant warnings** when visiting flagged domains.
+
+The goal wasn't just to build another "site checker" but to build a **WOT (Web of Trust)** alternative that is fast, modern, and actually fun to use.
+
+---
+
+## The Tech Stack: Bleeding Edge
+
+I wanted Webrat to feel premium and snappy. No clunky popups, no lag. To achieve this, I used a modern stack that heavily relies on the latest ecosystem updates.
+
+### Frontend (Extension)
+
+- **Framework:** [React 19](https://react.dev/) — Taking advantage of the latest actions and optimizations.
+- **Build Tool:** [Vite](https://vitejs.dev/) — For lightning-fast builds and HMR.
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) — Alpha/Beta versions, testing the future of utility-first CSS.
+- **UI Component Library:** [HeroUI](https://heroui.com/) — For accessible and beautiful components.
+- **Animation:** [Framer Motion](https://www.framer.com/motion/) — To make the extension pop with micro-interactions.
+
+### Backend
+
+- **Runtime:** Node.js & TypeScript.
+- **Database:** PostgreSQL (with Drizzle ORM).
+- **Architecture:** A lightweight API service handling auth, ratings aggregation, and real-time report syncing.
+
+---
+
+## Key Challenges & Solutions
+
+### 1. Handling Real-Time Context
+
+The extension needs to know _exactly_ which tab you are looking at to serve the correct rating without spying on your history.
+**Solution:** I implemented an efficient event-driven architecture using the Chrome Tabs API. The extension only queries the backend for the _active_ tab's hostname, ensuring user privacy while delivering instant data.
+
+### 2. Trust & Authentication
+
+How do you prevent review bombing?
+**Solution:** Authenticated reviews only. I integrated **Google OAuth** directly into the extension. This ensures that every review is tied to a real account, significantly raising the bar for spammers while keeping the onboarding flow frictionless (`one-click` login).
+
+### 3. Modern UI in a Constrained Environment
+
+Building rich UIs inside a small extension popup is tricky.
+**Solution:** I used **React 19** and **Tailwind** to build a responsive, card-based interface. I also added a "Balance Ball" mini-game (WIP) to give users something fun to do when off-duty or on restricted pages!
+
+---
+
+## Features
+
+- **Instant Ratings:** See a site's reputation in milliseconds.
+- **Detailed Reviews:** Read why a site is distrusted (e.g., "Shipping took 3 months," "Fake return policy").
+- **Scam Protection:** Community-flagged domains trigger a warning.
+- **Privacy First:** We don't sell data. We only process the URL you are actively checking.
+
+---
+
+## Final Thoughts
+
+Building Webrat was a journey into the "Wild West" of chrome extension development. It reinforced my belief that **community is the best antivirus**. Algorithms can spot malware, but only humans can spot a scammer.
+
+Webrat is currently live and free. If you want to browse safer, give it a try.
+
+[**Check out Webrat**](https://webrat.online/)
