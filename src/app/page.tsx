@@ -392,7 +392,7 @@ export default function Home() {
             </Card>
           </Link>
 
-          <Link href="/projects" className="block group">
+          <Link href="/blog/deep-research-agent" className="block group">
             <Card className="h-full transition-all hover:bg-muted/40 hover:shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-base">

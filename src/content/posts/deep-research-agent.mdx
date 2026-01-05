@@ -1,0 +1,61 @@
+---
+title: "Building an Autonomous Deep Research Agent"
+publishedAt: "2026-01-05"
+summary: "How I built a brain-like research agent using LangGraph, Vector DBs, and Entropy-driven decision making."
+image: "/projects/deep-research-agent/banner.png"
+---
+
+In the era of LLMs, "search" is often just retrieval. But true _research_ is an iterative process of hypothesis formulation, evidence gathering, and belief updating. I wanted to build an agent that doesn't just answer questions but _thinks_ through them.
+
+Enter the **Deep Research Agent** (DdiverRAG) — an autonomous system designed to perform deep-dive web research with a cognitive architecture inspired by human reasoning.
+
+## The Cognitive Architecture
+
+The core of this agent isn't just a prompt; it's a **State Graph** built with [LangGraph](https://langchain-ai.github.io/langgraph/). The agent moves through distinct modes of thought:
+
+1.  **Planning**: Decomposing a query into research sub-questions.
+2.  **Execution**: Using tools (`search_web`, `visit_page`) to gather data.
+3.  **Belief Update**: Analyzing new data to update its internal "Belief State" (hypothesis + confidence).
+4.  **Reflection**: Calculating "Entropy" (uncertainty) to decide if more research is needed or if it has enough information to answer.
+
+### The Brain: Belief & Entropy
+
+One of the unique features is the **Belief State**. Instead of stateless execution, the agent maintains a running hypothesis.
+
+```python
+async def update_belief(state: AgentState, config: RunnableConfig):
+    """
+    Node: Updates the 'Belief State' based on the most recent tool outputs.
+    """
+    # ... (logic to extract tool outputs)
+
+    # The agent re-evaluates its hypothesis based on new evidence
+    response = await llm.ainvoke([HumanMessage(content=formatted_prompt)], config)
+
+    # It calculates 'Entropy' - a score of how confused it is
+    # High Entropy = Keep searching
+    # Low Entropy = Formulate answer
+    return {"belief_state": new_belief, "entropy": new_entropy}
+```
+
+This acts like a curiosity signal. If the agent finds conflicting information, its entropy spikes, triggering more robust verification steps.
+
+## The Tech Stack
+
+- **Framework**: LangGraph & LangChain
+- **LLM**: OpenAI GPT-4o / Ollama (Pluggable)
+- **Memory**: ChromaDB (Vector Store) for semantic context retrieval
+- **Tools**: DuckDuckGo Search, Custom Web Scraper
+- **Backend**: Python, FastAPI
+
+## Why "Deep" Research?
+
+Most RAG (Retrieval-Augmented Generation) systems are one-shot: Query -> Search -> Answer.
+
+This agent is **multi-turn and stateful**. It might search for "Agentic AI trends", read a blog, realize it doesn't understand "Active Inference", perform a sub-search on that specific topic, and then synthesize everything back into the main answer. It mimics the rabbit holes a human researcher goes down (but much faster).
+
+## Future Roadmap
+
+I am currently working on adding **Recursive Hierarchical Planning**, allowing the agent to spawn sub-agents for massive research tasks (e.g., "Write a market report on EV batteries"), where each sub-agent handles one section of the report.
+
+Start building your own agents — the shift from "Chatbot" to "Cognitive Agent" is here.

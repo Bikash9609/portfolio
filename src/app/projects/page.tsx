@@ -18,6 +18,18 @@ import Autoplay from "embla-carousel-autoplay";
 
 const projects = [
   {
+    title: "Deep Research Agent",
+    client: "Personal Project",
+    description:
+      "An autonomous research agent inspired by human cognition. Features a LangGraph-based architecture with Belief State and Entropy-driven decision making to perform deep-dive web research.",
+    tags: ["Python", "LangChain", "LangGraph", "Vector DB", "FastAPI"],
+    link: "/blog/deep-research-agent",
+    images: [
+      "/projects/deep-research-agent/1.png",
+      "/projects/deep-research-agent/banner.png",
+    ],
+  },
+  {
     title: "Webrat",
     client: "Personal Project",
     description:
@@ -161,9 +173,15 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
                 >
                   <Image
                     src={src}
+                    alt=""
+                    fill
+                    className="object-cover blur-xl scale-110 opacity-50"
+                  />
+                  <Image
+                    src={src}
                     alt={`${project.title} screenshot ${idx + 1}`}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-contain z-10"
                   />
                 </div>
               ))}
