@@ -1,0 +1,275 @@
+---
+title: "Building Frulow (LibQuest): a personal retrospective"
+date: "2024-02-15"
+description: "A plain, honest walkthrough of how I built Frulow — the UI and the backend — showing my thought process, decisions, and lessons learned."
+---
+
+# Introduction
+
+This is a plain, honest walkthrough of how I built Frulow — the UI and the backend — as represented in these repositories: `Bikash9609/LibQuest`, `Bikash9609/libquest-be`, and later consolidated into `Bikash9609/monorepo-libquest`. My goal here is to show my thought process, the decisions I made, the problems I hit and how I fixed them. I’m not trying to sound like a genius — just explaining how I built something useful and what I learned along the way.
+
+---
+
+## What is Frulow / LibQuest?
+
+At a high level Frulow (a.k.a. LibQuest) is a small product I built to explore building a complete web application end-to-end with a focus on reusability, developer experience, and pragmatic deployments.
+
+- Frulow (frontend) is the product-facing UI — the place users interact with the app.
+- LibQuest / libquest-be is the backend API and business logic powering the frontend.
+- `monorepo-libquest` is the later attempt to unify the code into a monorepo to simplify sharing code between frontend, backend, and small internal libraries.
+
+The implementation is TypeScript across the stack — I picked it to get strong typing, better DX, and easier sharing of types across server & client.
+
+---
+
+## Motivation and goals
+
+When I started this project I had three simple goals:
+
+1. Build a real product (with real user flows) to practice full-stack development.
+2. Learn how to structure code so pieces can be reused between frontend and backend.
+3. Practice shipping — local dev, containerization, and simple CI — so the project could be shown to employers.
+
+I intentionally kept the feature set small so the focus could be on architecture, code quality, and deployment patterns rather than feature bloat.
+
+---
+
+## High-level architecture
+
+Conceptually the system has these parts:
+
+- Frontend (LibQuest / Frulow): Single-page app (TypeScript + modern frontend framework) that consumes a JSON REST API.
+- Backend (`libquest-be`): TypeScript server that exposes REST endpoints, handles authentication, and manages persistence.
+- Shared libraries: small packages (or a `packages/` folder in the monorepo) for shared types, client API helpers, and utility code.
+- Persistence: relational DB (Postgres) for primary data, with optional Redis for caching / session storage.
+- Dev & deployment: Docker for reproducible environments, GitHub Actions for CI.
+
+Why this structure?
+
+- TypeScript everywhere lets me share DTOs and avoid mismatches between client and server.
+- A small backend API allows the frontend to be simple and testable.
+- A monorepo reduces friction when moving code between frontend and backend — shared types and utilities live in one place.
+
+---
+
+## System design: components & responsibilities
+
+- Client (UI)
+
+  - Presentation, state management, route handling.
+  - Consumes backend API and shows results.
+  - Uses a typed API client generated or hand-written to match server types.
+
+- API Gateway / Server
+
+  - Handles authentication (JWT or cookie-based).
+  - Exposes REST endpoints: auth, CRUD endpoints for core resources (items, quests, libraries).
+  - Validation, rate limiting, error structure.
+
+- Database
+
+  - Main data store. I used a relational model for simplicity and data integrity.
+  - Migration tool (e.g. Prisma, TypeORM, Flyway) so schema changes are reproducible.
+
+- Shared Libs
+
+  - `@libquest/types` — shared TypeScript types.
+  - `@libquest/client` — thin API wrapper used by the frontend.
+
+- Infrastructure
+  - Dockerfiles for local dev and simple production images.
+  - Basic CI pipeline: lint, tests, build, optionally publish artifacts.
+
+Textual diagram (simple):
+
+`Client (LibQuest SPA) <--> Backend API (libquest-be) <--> Database (Postgres)`
+^
+| shared types & helpers (monorepo packages)
+
+---
+
+## Some important design decisions and why
+
+1. TypeScript everywhere
+
+   - Decision: Use TypeScript for both frontend and backend.
+   - Why: Single language across stack, compile-time safety and ability to share types.
+   - Trade-off: More initial config, but saved time catching type errors early.
+
+2. Small REST API rather than GraphQL
+
+   - Decision: REST endpoints for simple resources.
+   - Why: Simpler to implement for this project scope; the data shapes were simple enough that REST was straightforward.
+   - Trade-off: Less flexibility for client-driven queries; but simplicity was more important here.
+
+3. Monorepo vs separate repos
+
+   - Started with separate repos (`LibQuest`, `libquest-be`) for clarity.
+   - Moved to a monorepo (`monorepo-libquest`) once shared code and types started to duplicate.
+   - Why monorepo: easier refactoring, single CI, direct imports of shared packages during development.
+   - Trade-off: Slightly more complex tooling (workspace package manager), but worth it for DX.
+
+4. Docker for environments
+   - Decision: Dockerize app for deterministic dev & deploy.
+   - Why: Avoid "works on my machine", easy to test quick deployments.
+
+---
+
+## Example snippets (to show concrete ideas)
+
+A simple shared type (shared package):
+
+```ts
+// packages/types/src/index.ts
+export interface Quest {
+  id: string;
+  title: string;
+  description?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+```
+
+A backend route (Express-like pseudocode):
+
+```ts
+// src/routes/quests.ts
+import express from "express";
+import { db } from "../db";
+const router = express.Router();
+
+router.get("/", async (req, res) => {
+  const quests = await db.quest.findMany();
+  res.json(quests);
+});
+
+router.post("/", async (req, res) => {
+  const { title, description } = req.body;
+  const newQuest = await db.quest.create({ data: { title, description } });
+  res.status(201).json(newQuest);
+});
+
+export default router;
+```
+
+A simple Prisma-style schema fragment (if using Prisma):
+
+```prisma
+model Quest {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+```
+
+A tiny Dockerfile for the backend:
+
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY dist ./dist
+CMD ["node", "dist/index.js"]
+```
+
+---
+
+## Technical challenges and how I handled them
+
+1. Sharing types and avoiding duplication
+
+   - Problem: Types would drift between frontend and backend, leading to runtime errors.
+   - Solution: Extracted shared types to a package (or workspace) and imported it into both apps. If that wasn’t possible early on, I copied types and then consolidated once I moved to a monorepo.
+
+2. Authentication & session handling
+
+   - Problem: Choosing between JWT and session cookies, and handling secure cookies in browsers.
+   - Thought process: JWTs are convenient for stateless APIs, but cookie sessions offer better protection against token leakage in some contexts.
+   - Solution: I chose a simple JWT approach initially (short lifetime) and stored refresh tokens server-side when needed. I also made sure to use HTTPS and secure cookie flags in production.
+
+3. Local dev environment parity
+
+   - Problem: Differences between local dev and production DBs or config caused bugs.
+   - Solution: Docker Compose to orchestrate Postgres and the app, and an `.env.example`. Keep migrations automated so local schemas match production.
+
+4. Testing and fast feedback
+
+   - Problem: Slow test feedback slowed development.
+   - Solution: I wrote focused unit tests with Jest for core logic and a small number of integration tests to exercise important flows. Kept tests small and deterministic.
+
+5. Monorepo tooling friction
+
+   - Problem: Moving to a monorepo means needing a workspace-aware package manager and build flow.
+   - Solution: Used a package manager that supports workspaces (npm/yarn/pnpm), set up simple scripts for building packages, and ensured TypeScript path mappings were configured.
+
+6. Deployment and CI
+   - Problem: I needed a simple, reliable process to redeploy after changes.
+   - Solution: GitHub Actions (or similar) for pipeline: lint -> test -> build -> push image (or deploy). Kept the pipeline short by running only essential checks on pull requests and full build on main branch.
+
+---
+
+## Problems I ran into (concrete examples) and remedies
+
+- Duplicate validation logic
+
+  - Issue: Validations written separately in client and server sometimes went out of sync.
+  - Fix: Move validation schemas to a shared package (like Zod schemas exported from a `types` package) and reference them in server and client.
+
+- Race conditions during migrations
+
+  - Issue: Ship a DB migration, the new code expects the new column but some instances still run old code.
+  - Fix: Adopt zero-downtime migration patterns: add nullable columns first, backfill, then make them non-null and update code in two steps.
+
+- Inconsistent date handling (timezones)
+
+  - Issue: Dates rendered differently between client and server.
+  - Fix: Standardize on UTC in the backend and parse/format on the client as needed; add small date helper utils.
+
+- Slow CI
+  - Issue: Full builds for every PR were taking too long.
+  - Fix: Cache dependencies and run only relevant test suites for PRs; full build only for merges to main.
+
+---
+
+## What I would do differently / future improvements
+
+- Add typed API client generation (OpenAPI or tRPC) so the client always matches the server.
+- Add integration tests that run against a disposable Postgres (testcontainers) to reduce drift.
+- Introduce feature flags for safer rollouts if this grows.
+- Add monitoring and simple observability: logs, request tracing, and error reporting (Sentry/Logflare).
+- If scale becomes a concern, add Redis caching for read-heavy endpoints and async queues for heavy background tasks.
+
+---
+
+## Small developer guide (how I think about running this locally)
+
+1. Clone into monorepo (if using monorepo)
+2. Install dependencies
+   - npm install (or pnpm install)
+3. Start local DB (docker-compose)
+   - docker-compose up -d postgres
+4. Run migrations
+   - npm run migrate
+5. Start backend
+   - npm run dev --workspace=libquest-be
+6. Start frontend
+   - npm run dev --workspace=LibQuest
+
+(Exact commands depend on scripts in package.json — the idea is to keep the steps minimal and scriptable.)
+
+---
+
+## Final thoughts — the process and what I learned
+
+I built this project to learn by doing. A lot of my decisions were guided by keeping the problem small and focusing on maintainability:
+
+- Prefer pragmatic solutions that minimize cognitive load for future you.
+- Small, reusable packages reduce duplication and ease refactors.
+- Investing early in DX (types, shared schemas, simple Docker setups) pays off in faster iteration later.
+
+Building Frulow / LibQuest felt like balancing between getting things to work and building them in a way that’s also maintainable. I intentionally favored clarity and a good developer experience over premature optimization. That mindset helped me ship more and learn more.
+
+Thanks for reading
