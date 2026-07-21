@@ -15,6 +15,7 @@ import { ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
+import { GithubLiveFeed } from "@/components/GithubLiveFeed";
 
 const projects = [
   {
@@ -296,12 +297,21 @@ export default function ProjectsPage() {
           ))}
         </motion.div>
 
-        <div className="text-center py-12 mt-4 space-y-3">
-          <span className="text-4xl inline-block animate-bounce">🧑‍💻</span>
-          <p className="text-muted-foreground italic text-sm max-w-sm mx-auto">
-            I am coding everyday and all the time, so it&apos;s hard to
-            add/update it here all the time! 😅
-          </p>
+        <div className="mt-16 pt-8 border-t">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-3xl font-bold font-heading">Recent Open Source</h2>
+              <p className="text-muted-foreground mt-2">Live updates from my GitHub activity.</p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/projects/github">
+                View All Repositories
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          
+          <GithubLiveFeed limit={6} />
         </div>
       </div>
     </div>
