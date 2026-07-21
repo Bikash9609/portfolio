@@ -137,11 +137,11 @@ export default function AboutPage() {
             <p className="text-sm font-semibold">Looking for a thorough engineer?</p>
             <p className="text-xs text-muted-foreground mt-0.5">Open to remote full-time and contract roles.</p>
           </div>
-          <Link href="mailto:bikashtiwari020@gmail.com" className="shrink-0">
+          <a href="mailto:bikashtiwari020@gmail.com" className="shrink-0">
             <span className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
               Get in touch <ArrowRight className="h-3 w-3" />
             </span>
-          </Link>
+          </a>
         </div>
       </motion.section>
     </motion.div>

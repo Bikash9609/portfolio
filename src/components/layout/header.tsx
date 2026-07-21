@@ -57,20 +57,28 @@ export function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex md:items-center md:gap-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
+          {navItems.map((item) => {
+            const isMailto = item.href.startsWith('mailto:');
+            const commonProps = {
+              key: item.href,
+              className: cn(
                 "relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                 pathname === item.href || (pathname === '/' && item.href === '/#work')
                   ? "text-foreground bg-muted/50"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-              )}
-            >
-              {item.name}
-            </Link>
-          ))}
+              )
+            };
+            
+            return isMailto ? (
+              <a href={item.href} {...commonProps}>
+                {item.name}
+              </a>
+            ) : (
+              <Link href={item.href} {...commonProps}>
+                {item.name}
+              </Link>
+            );
+          })}
           <div className="ml-2 pl-2 border-l border-border/50">
             <ModeToggle />
           </div>
@@ -101,21 +109,29 @@ export function Header() {
             className="md:hidden border-b bg-background/95 backdrop-blur-xl overflow-hidden"
           >
             <nav className="flex flex-col gap-1 p-4 max-w-screen-lg mx-auto">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
+              {navItems.map((item) => {
+                const isMailto = item.href.startsWith('mailto:');
+                const commonProps = {
+                  key: item.href,
+                  onClick: () => setIsOpen(false),
+                  className: cn(
                     "px-4 py-3 text-sm font-medium rounded-md transition-colors",
                     pathname === item.href
                       ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
+                  )
+                };
+
+                return isMailto ? (
+                  <a href={item.href} {...commonProps}>
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link href={item.href} {...commonProps}>
+                    {item.name}
+                  </Link>
+                );
+              })}
             </nav>
           </motion.div>
         )}

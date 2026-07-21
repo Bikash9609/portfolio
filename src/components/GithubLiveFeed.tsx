@@ -20,6 +20,7 @@ interface Repo {
 export function GithubLiveFeed({ limit }: { limit?: number }) {
   const [repos, setRepos] = useState<Repo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchRepos() {
@@ -31,6 +32,7 @@ export function GithubLiveFeed({ limit }: { limit?: number }) {
         setRepos(limit ? nonForked.slice(0, limit) : nonForked);
       } catch (error) {
         console.error("Error fetching github repos:", error);
+        setError("Unable to load GitHub activity right now. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -44,6 +46,14 @@ export function GithubLiveFeed({ limit }: { limit?: number }) {
         {[...Array(limit || 6)].map((_, i) => (
           <div key={i} className="h-48 bg-muted rounded-xl border border-border" />
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-8 p-6 border border-border/50 rounded-xl bg-muted/30 text-center text-muted-foreground text-sm">
+        {error}
       </div>
     );
   }

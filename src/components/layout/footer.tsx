@@ -14,9 +14,9 @@ export function Footer() {
             <p className="text-sm text-muted-foreground mt-1">
               Senior Full-Stack & AI Engineer · Ranchi → Remote
             </p>
-            <Link href="mailto:bikashtiwari020@gmail.com" className="inline-block mt-3 text-sm font-medium text-primary hover:underline">
+            <a href="mailto:bikashtiwari020@gmail.com" className="inline-block mt-3 text-sm font-medium text-primary hover:underline">
               bikashtiwari020@gmail.com
-            </Link>
+            </a>
           </div>
 
           <div className="flex items-center gap-4">

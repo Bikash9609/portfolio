@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { StackOverflow } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { GithubLiveFeed } from "@/components/GithubLiveFeed";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 10 },
@@ -143,7 +144,7 @@ export default function Home() {
               <Link href="#work">View selected work</Link>
             </Button>
             <Button variant="outline" className="rounded-lg h-10 px-5 text-sm" asChild>
-              <Link href="mailto:bikashtiwari020@gmail.com">Contact me</Link>
+              <a href="mailto:bikashtiwari020@gmail.com">Contact me</a>
             </Button>
           </div>
         </motion.div>
@@ -301,6 +302,19 @@ export default function Home() {
                <Link href="/blog">Read the blog <ArrowRight className="w-4 h-4" /></Link>
             </Button>
          </motion.div>
+      </section>
+
+      {/* ── Section 6: GitHub Activity ── */}
+      <section className="pt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-heading font-bold">Recent Commits & Activity</h2>
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" asChild>
+             <Link href="/projects/github">
+               View All <ArrowRight className="w-3 h-3" />
+             </Link>
+          </Button>
+        </div>
+        <GithubLiveFeed limit={3} />
       </section>
 
     </motion.div>
