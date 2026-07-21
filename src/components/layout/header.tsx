@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 
 const navItems = [
-  { name: "Home", href: "/" },
-  { name: "Projects", href: "/projects" },
-  { name: "Blog", href: "/blog" },
+  { name: "Work", href: "/#work" },
+  { name: "About", href: "/about" },
+  { name: "Writing", href: "/blog" },
+  { name: "Contact", href: "mailto:bikashtiwari020@gmail.com" },
 ];
 
 export function Header() {
@@ -33,51 +34,44 @@ export function Header() {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
-          ? "border-b bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 shadow-sm"
+          ? "border-b bg-background/80 backdrop-blur-xl shadow-sm"
           : "bg-transparent"
       )}
     >
-      <div className="max-w-screen-lg mx-auto w-full flex h-14 items-center justify-between px-4">
+      <div className="max-w-screen-lg mx-auto w-full flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="relative h-7 w-7 overflow-hidden rounded-lg border border-border group-hover:border-primary/50 transition-colors">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative h-8 w-8 overflow-hidden rounded-full border border-border group-hover:border-primary/50 transition-colors">
             <Image
               src="/profile.jpeg"
               alt="Bikash"
               fill
               className="object-cover"
-              sizes="28px"
+              sizes="32px"
             />
           </div>
-          <span className="font-heading text-sm font-bold tracking-tight">
+          <span className="font-heading text-lg font-bold tracking-tight">
             Bikash<span className="text-primary">.</span>
           </span>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex md:items-center md:gap-1">
+        <nav className="hidden md:flex md:items-center md:gap-2">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "relative px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200",
-                pathname === item.href
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                "relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                pathname === item.href || (pathname === '/' && item.href === '/#work')
+                  ? "text-foreground bg-muted/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
               )}
             >
               {item.name}
-              {pathname === item.href && (
-                <motion.span
-                  layoutId="nav-indicator"
-                  className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/20"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                />
-              )}
             </Link>
           ))}
-          <div className="ml-2">
+          <div className="ml-2 pl-2 border-l border-border/50">
             <ModeToggle />
           </div>
         </nav>
@@ -88,11 +82,11 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg"
+            className="h-9 w-9 rounded-md"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle Menu"
           >
-            {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>
@@ -104,19 +98,19 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-b bg-background/95 backdrop-blur-xl"
+            className="md:hidden border-b bg-background/95 backdrop-blur-xl overflow-hidden"
           >
-            <nav className="flex flex-col gap-1 p-3 max-w-screen-lg mx-auto">
+            <nav className="flex flex-col gap-1 p-4 max-w-screen-lg mx-auto">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "px-3 py-2.5 text-sm font-medium rounded-lg transition-all",
+                    "px-4 py-3 text-sm font-medium rounded-md transition-colors",
                     pathname === item.href
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
                   {item.name}
