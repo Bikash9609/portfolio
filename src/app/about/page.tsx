@@ -1,144 +1,149 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowRight, BookOpen, Cpu, Github } from "lucide-react";
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: (i = 0) => ({
     opacity: 1,
+    y: 0,
     transition: {
-      staggerChildren: 0.1,
+      delay: i * 0.07,
+      duration: 0.45,
+      ease: "easeOut" as const,
     },
-  },
+  }),
 };
 
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
 };
 
-const experiences = [
-  {
-    company: "Material+",
-    role: "Senior Software Developer - L2",
-    period: "Oct '22 — Present",
-    description:
-      "Led architecture and optimization of large-scale MERN + Fastify systems. Built high-volume data pipelines, optimized APIs, and managed Kubernetes deployments.",
-    skills: [
-      "MERN Stack",
-      "Fastify",
-      "Kubernetes",
-      "Redis",
-      "System Architecture",
-    ],
-  },
-  {
-    company: "Srijan Technologies",
-    role: "Senior JavaScript Developer - L1",
-    period: "Jan '22 — Oct '22",
-    description:
-      "Built and maintained services in MERN with Fastify. Monitored services using Dynatrace and wrote Kubernetes consumers for scalable deployments.",
-    skills: ["React", "Node.js", "Dynatrace", "Microservices"],
-  },
-  {
-    company: "Jai Infoway",
-    role: "Web Developer",
-    period: "Jan '21 — Jan '22",
-    description:
-      "Delivered responsive, custom-built ReactJS interfaces. Built multi-product booking platforms and microservice-based backends on AWS EC2.",
-    skills: ["ReactJS", "Redux", "AWS EC2", "PostgreSQL"],
-  },
-  {
-    company: "Freelancer.com",
-    role: "Freelance Web Developer",
-    period: "Jun '20 — Jan '21",
-    description:
-      "Developed digital event websites and interactive components. Integrated APIs and implemented secure authentication flows.",
-    skills: ["ReactJS", "API Integration", "Authentication"],
-  },
-  {
-    company: "OLSO Rental",
-    role: "Frontend Web Developer",
-    period: "Nov '19 — Jun '20",
-    description:
-      "Built scalable, high-performance UIs using React.js and Redux. Integrated REST APIs and ensured cross-browser compatibility.",
-    skills: ["React.js", "Redux", "Material UI", "HTML5/CSS3"],
-  },
+const latestProjects = [
+  { name: "Yoni", desc: "Software specification language — you describe intent, AI implements it.", href: "https://github.com/Bikash9609/yoni", tag: "Python / TypeScript" },
+  { name: "Layr", desc: "High-performance data layering in Rust.", href: "https://github.com/Bikash9609/Layr", tag: "Rust" },
+  { name: "ChronicStream", desc: "Uninterrupted, low-latency data pipelines.", href: "https://github.com/Bikash9609/chronic_stream", tag: "Rust" },
+  { name: "DdiverRAG", desc: "Autonomous deep research agent with belief states and entropy-driven loops.", href: "https://github.com/Bikash9609/DdiverRAG", tag: "Python / LangGraph" },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="container px-4 py-12 md:py-24">
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="max-w-4xl mx-auto space-y-16"
-      >
-        <motion.div variants={item} className="text-center space-y-4">
-          <h1 className="text-4xl font-bold font-heading sm:text-5xl">
-            About Me
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            I&apos;m a Senior Full-Stack JavaScript leader based in Jharkhand,
-            India, with 5+ years of experience delivering scalable,
-            high-performance web applications.
+    <motion.div
+      variants={stagger}
+      initial="hidden"
+      animate="show"
+      className="space-y-8 max-w-2xl"
+    >
+      <motion.section variants={fadeUp} custom={0} className="space-y-4">
+        <h1 className="text-2xl font-bold font-heading tracking-tight">
+          About me
+        </h1>
+        <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+          <p>
+            I&apos;m Bikash — a Senior Full-Stack Engineer based in Ranchi, Jharkhand. 5+ years building systems that 
+            need to actually work under production conditions: sub-2s APIs, non-blocking renders, reliable ETL pipelines, 
+            and more recently, agentic AI systems that reason instead of just retrieve.
           </p>
-        </motion.div>
+          <p>
+            My background is in JavaScript/TypeScript across the stack — React, Next.js, Node.js, Fastify — but I reach for 
+            Python when I&apos;m doing data work or building AI pipelines, and Rust when a hot path in Node.js becomes 
+            a throughput bottleneck. The choice of tool is always deliberate.
+          </p>
+          <p>
+            I&apos;ve worked on products ranging from enterprise carbon-emission analysis platforms (thousands of daily users, 
+            heavy datasets, custom spreadsheets in React) to cross-platform mobile apps with Python ETL aggregators to 
+            community forums to Chrome extensions. The variety is intentional — I learn more from different problem domains 
+            than from depth in a single one.
+          </p>
+          <p>
+            The thing I care about most is{" "}
+            <span className="text-foreground font-medium">architecture that ages well</span>. Not clever code. 
+            Not code that impresses in a PR review. Code that a new engineer can onboard on in a day, 
+            that a future you can maintain without archaeology, and that fails gracefully when it does fail.
+          </p>
+        </div>
+      </motion.section>
 
-        <motion.div variants={item} className="space-y-8">
-          <h2 className="text-2xl font-bold font-heading border-b pb-2">
-            Experience
-          </h2>
-          <div className="relative border-l border-muted ml-4 space-y-12">
-            {experiences.map((exp, index) => (
-              <div key={index} className="relative pl-8">
-                <div className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border border-primary bg-background" />
-                <Card className="border-none shadow-none bg-transparent">
-                  <CardHeader className="p-0 mb-2">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-                      <CardTitle className="text-xl">{exp.role}</CardTitle>
-                      <span className="text-sm text-muted-foreground font-mono">
-                        {exp.period}
-                      </span>
-                    </div>
-                    <p className="text-primary font-medium">{exp.company}</p>
-                  </CardHeader>
-                  <CardContent className="p-0 space-y-4">
-                    <p className="text-muted-foreground">{exp.description}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {exp.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="text-xs border rounded-full px-2 py-1 bg-secondary/50"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+      <motion.section variants={fadeUp} custom={1} className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Cpu className="h-4 w-4 text-primary" />
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-medium">How I approach technology</h2>
+        </div>
+        <div className="space-y-3">
+          {[
+            {
+              q: "SQL or NoSQL?",
+              a: "SQL — until the data model genuinely doesn't fit a relational structure. I use PostgreSQL JSONB for semi-structured data so I can stay on one system longer. I reach for MongoDB when document mutation patterns are the norm and joins would be artificial."
+            },
+            {
+              q: "REST or GraphQL?",
+              a: "REST for most backends. GraphQL when clients have meaningfully different data requirements and over-fetching is a real network cost — typically mobile clients hitting a shared API. GraphQL's tooling overhead isn't worth it for a standard web app with predictable data needs."
+            },
+            {
+              q: "When do you use AI in a system?",
+              a: "When the problem involves ambiguity that explicit rules can't handle well. Classification, extraction, synthesis, intent understanding. I don't reach for LLMs to do things deterministic code does better — filtering, sorting, arithmetic, rule-based validation."
+            },
+            {
+              q: "Microservices or monolith?",
+              a: "Monolith first. Extract services only when a component has a genuinely different scaling axis, failure mode, or deployment lifecycle. Premature decomposition creates distributed systems complexity without the benefits."
+            },
+          ].map((item, i) => (
+            <div key={i} className="bento-card space-y-1.5">
+              <p className="text-sm font-semibold text-foreground">{item.q}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.a}</p>
+            </div>
+          ))}
+        </div>
+      </motion.section>
+
+      <motion.section variants={fadeUp} custom={2} className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Github className="h-4 w-4 text-primary" />
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-medium">Recent activity</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {latestProjects.map((p) => (
+            <Link key={p.name} href={p.href} target="_blank" rel="noopener noreferrer" className="block group">
+              <div className="bento-card h-full space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold group-hover:text-primary transition-colors">{p.name}</p>
+                  <span className="skill-tag text-[10px] shrink-0">{p.tag}</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
               </div>
-            ))}
-          </div>
-        </motion.div>
+            </Link>
+          ))}
+        </div>
+      </motion.section>
 
-        <motion.div variants={item} className="space-y-6">
-          <h2 className="text-2xl font-bold font-heading border-b pb-2">
-            Education
-          </h2>
+      <motion.section variants={fadeUp} custom={3} className="space-y-4">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4 text-primary" />
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-medium">Education</h2>
+        </div>
+        <div className="bento-card">
+          <p className="text-sm font-semibold">Bachelor&apos;s Degree in Computer Applications</p>
+          <p className="text-xs text-primary mt-0.5">DSPMU, Ranchi, India</p>
+          <p className="text-xs text-muted-foreground mt-0.5">GPA: 8.8 · Graduated 2022</p>
+        </div>
+      </motion.section>
+
+      <motion.section variants={fadeUp} custom={4}>
+        <div className="bento-card gradient-border flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold">
-              Bachelor&apos;s Degree in Computer Applications
-            </h3>
-            <p className="text-muted-foreground">
-              DSPMU, Ranchi, India (GPA: 8.8)
-            </p>
-            <span className="text-sm text-muted-foreground">Jan &apos;22</span>
+            <p className="text-sm font-semibold">Looking for a thorough engineer?</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Open to remote full-time and contract roles.</p>
           </div>
-        </motion.div>
-      </motion.div>
-    </div>
+          <Link href="mailto:bikashtiwari020@gmail.com" className="shrink-0">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+              Get in touch <ArrowRight className="h-3 w-3" />
+            </span>
+          </Link>
+        </div>
+      </motion.section>
+    </motion.div>
   );
 }

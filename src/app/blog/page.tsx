@@ -1,66 +1,49 @@
 import Link from "next/link";
 import { getAllPosts } from "@/lib/mdx";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, PenLine } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 export default function BlogPage() {
   const posts = getAllPosts();
 
   return (
-    <div className="container px-4 py-12 md:py-24">
-      <div className="flex flex-col gap-4 mb-12 text-center md:text-left">
-        <h1 className="text-4xl font-bold font-heading sm:text-5xl">Blog</h1>
-        <p className="text-lg text-muted-foreground">
-          Thoughts, tutorials, and insights on web development.
+    <div className="space-y-8 max-w-2xl">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 mb-3">
+          <PenLine className="h-4 w-4 text-primary" />
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Writing</p>
+        </div>
+        <h1 className="text-2xl font-bold font-heading tracking-tight">Blog</h1>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Deep dives into systems, architecture decisions, and the reasoning behind tool choices.
+          Not tutorials — engineering retrospectives.
         </p>
       </div>
 
-      <div className="grid gap-8 grid-cols-1 max-w-4xl mx-auto">
+      <div className="space-y-3">
         {posts.map((post) => (
-          <Card
-            key={post.slug}
-            className="flex flex-col h-full transition-all hover:border-primary/50 hover:shadow-md"
-          >
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                <CardTitle className="text-2xl line-clamp-2">
+          <Link key={post.slug} href={`/blog/${post.slug}`} className="block group">
+            <div className="bento-card flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <h2 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">
                   {post.title}
-                </CardTitle>
-                <CardDescription className="shrink-0">
-                  {post.date}
-                </CardDescription>
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                  {post.description}
+                </p>
               </div>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <p className="text-muted-foreground text-base leading-relaxed line-clamp-3">
-                {post.description}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button
-                asChild
-                variant="ghost"
-                className="group w-full sm:w-auto justify-start pl-0 hover:pl-2 transition-all p-0"
-              >
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="flex items-center gap-2"
-                >
-                  Read Article{" "}
-                  <span className="group-hover:translate-x-1 transition-transform">
-                    →
-                  </span>
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0">
+                <span className="text-xs font-mono text-muted-foreground/70 whitespace-nowrap">
+                  {post.date
+                    ? formatDistanceToNow(new Date(post.date), { addSuffix: true })
+                    : ""}
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                  Read <ArrowRight className="h-3 w-3" />
+                </span>
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
     </div>

@@ -6,16 +6,49 @@ import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Bikash Tiwari | Full Stack Developer",
+  title: "Bikash Tiwari — Senior Full-Stack & AI Engineer",
   description:
-    "Senior Full Stack Developer specializing in Next.js, React, and Node.js.",
+    "Full-Stack engineer who architects AI-augmented systems — from agentic pipelines and RAG frameworks to production-grade React/Node.js platforms. 5+ years. Ranchi → Remote.",
+  keywords: [
+    "Full Stack Developer",
+    "AI Engineer",
+    "LangGraph",
+    "RAG",
+    "Next.js",
+    "React",
+    "Node.js",
+    "TypeScript",
+    "Python",
+    "Rust",
+    "Agentic AI",
+  ],
+  authors: [{ name: "Bikash Tiwari" }],
+  creator: "Bikash Tiwari",
+  openGraph: {
+    type: "website",
+    title: "Bikash Tiwari — Senior Full-Stack & AI Engineer",
+    description:
+      "Full-Stack engineer who architects AI-augmented systems — from agentic pipelines and RAG frameworks to production-grade React/Node.js platforms.",
+    siteName: "Bikash Tiwari",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bikash Tiwari — Senior Full-Stack & AI Engineer",
+    description:
+      "Full-Stack engineer who architects AI-augmented systems — from agentic pipelines and RAG frameworks to production-grade React/Node.js platforms.",
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +62,7 @@ export default function RootLayout({
         className={cn(
           inter.variable,
           jetbrainsMono.variable,
-          "font-sans antialiased min-h-screen flex flex-col"
+          "font-sans antialiased min-h-screen flex flex-col bg-background"
         )}
       >
         <ThemeProvider
@@ -39,7 +72,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Header />
-          <main className="flex-1 flex flex-col max-w-screen-md mx-auto w-full px-4 py-8">
+          <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full px-4 py-8 md:py-12">
             {children}
           </main>
           <Footer />

@@ -1,61 +1,205 @@
 ---
-title: "Building an Autonomous Deep Research Agent"
-publishedAt: "2026-01-05"
-summary: "How I built a brain-like research agent using LangGraph, Vector DBs, and Entropy-driven decision making."
-image: "/projects/deep-research-agent/banner.png"
+title: "Building an Autonomous Deep Research Agent: LangGraph, Belief States, and the Entropy Decision Loop"
+date: "2026-01-14"
+description: "How I built a cognitive research agent that doesn't just retrieve — it reasons. A deep dive into stateful LangGraph architectures, Belief States, and Entropy-driven curiosity signals that make an agent genuinely research-capable."
 ---
 
-In the era of LLMs, "search" is often just retrieval. But true _research_ is an iterative process of hypothesis formulation, evidence gathering, and belief updating. I wanted to build an agent that doesn't just answer questions but _thinks_ through them.
+# Building an Autonomous Deep Research Agent
 
-Enter the **Deep Research Agent** (DdiverRAG) — an autonomous system designed to perform deep-dive web research with a cognitive architecture inspired by human reasoning.
+Most RAG implementations are a glorified `SELECT * WHERE embedding NEAR ?`. Query in, chunks out, LLM summarizes. That's retrieval — not research. Research is iterative. It's forming a hypothesis, testing it against evidence, noticing contradictions, drilling deeper, and synthesizing across multiple contexts. That's what I built.
 
-## The Cognitive Architecture
+**DdiverRAG** is a stateful autonomous research agent built on LangGraph. This post is a real architectural walkthrough — the decisions, the graph design, and why standard RAG patterns fall short for non-trivial problems.
 
-The core of this agent isn't just a prompt; it's a **State Graph** built with [LangGraph](https://langchain-ai.github.io/langgraph/). The agent moves through distinct modes of thought:
+---
 
-1.  **Planning**: Decomposing a query into research sub-questions.
-2.  **Execution**: Using tools (`search_web`, `visit_page`) to gather data.
-3.  **Belief Update**: Analyzing new data to update its internal "Belief State" (hypothesis + confidence).
-4.  **Reflection**: Calculating "Entropy" (uncertainty) to decide if more research is needed or if it has enough information to answer.
+## Why standard RAG fails for deep research
 
-### The Brain: Belief & Entropy
+RAG (Retrieval-Augmented Generation) was a breakthrough for question-answering over documents. But it has hard assumptions baked in:
 
-One of the unique features is the **Belief State**. Instead of stateless execution, the agent maintains a running hypothesis.
+- **One-shot**: Query → retrieve k chunks → LLM responds. No second pass.
+- **Stateless**: Each invocation knows nothing from the last.
+- **Trust-based**: Retrieved text is treated as ground truth, not as evidence to evaluate.
+
+For shallow Q&A, these are fine. For research — where topics interconnect, sources conflict, and "I don't know enough yet" is a valid intermediate state — these assumptions break down fast.
+
+The core insight I built around: **research is a process of managed uncertainty, not a lookup**.
+
+---
+
+## The Architecture: LangGraph State Graph
+
+I chose [LangGraph](https://langchain-ai.github.io/langgraph/) specifically because it models workflows as directed graphs with persistent state. This maps perfectly to how research actually works — you don't move linearly from question to answer; you cycle.
+
+The agent's graph has four core nodes:
+
+```
+[PLAN] → [EXECUTE] → [BELIEVE] → [REFLECT]
+                          ↑              ↓
+                          └──────────────┘
+                        (loop while entropy > threshold)
+                                   ↓
+                              [SYNTHESIZE]
+```
+
+Each node gets the full `AgentState` object — a typed dataclass that persists across cycles:
+
+```python
+@dataclass
+class AgentState:
+    query: str
+    sub_questions: list[str]       # from PLAN
+    tool_outputs: list[ToolOutput] # from EXECUTE
+    belief_state: BeliefState      # updated each cycle
+    entropy: float                 # uncertainty measure
+    iteration: int
+    final_answer: str | None
+```
+
+The graph loops until `entropy < 0.25` or `iteration > 5`. This is the key departure from standard RAG.
+
+---
+
+## The Belief State: What the Agent "Thinks"
+
+The `BeliefState` is not just memory — it's the agent's running hypothesis about the answer. After each EXECUTE cycle, the LLM updates it:
+
+```python
+class BeliefState(TypedDict):
+    hypothesis: str           # current best answer
+    confidence: float         # 0.0–1.0
+    supporting_evidence: list[str]
+    conflicting_evidence: list[str]
+    knowledge_gaps: list[str] # what it still doesn't know
+```
+
+Why model it this way? Because it forces the LLM to explicitly track **what it believes vs. what it's uncertain about**. Without this structure, LLMs confidently hallucinate when they lack information. With a typed `BeliefState`, the model must declare gaps — and the graph uses those gaps to drive the next search.
+
+---
+
+## Entropy: The Curiosity Signal
+
+Entropy here is a proxy for **uncertainty** — borrowed loosely from information theory. I calculate it from the belief state:
 
 ```python
 async def update_belief(state: AgentState, config: RunnableConfig):
-    """
-    Node: Updates the 'Belief State' based on the most recent tool outputs.
-    """
-    # ... (logic to extract tool outputs)
-
-    # The agent re-evaluates its hypothesis based on new evidence
-    response = await llm.ainvoke([HumanMessage(content=formatted_prompt)], config)
-
-    # It calculates 'Entropy' - a score of how confused it is
-    # High Entropy = Keep searching
-    # Low Entropy = Formulate answer
+    prompt = build_belief_update_prompt(state)
+    response = await llm.ainvoke([HumanMessage(content=prompt)], config)
+    
+    new_belief: BeliefState = parse_belief_response(response.content)
+    
+    # Entropy increases with:
+    # - low confidence
+    # - high number of conflicting evidence items
+    # - unresolved knowledge gaps
+    new_entropy = compute_entropy(new_belief)
+    
     return {"belief_state": new_belief, "entropy": new_entropy}
+
+
+def compute_entropy(belief: BeliefState) -> float:
+    confidence_term = 1.0 - belief["confidence"]
+    conflict_term = min(len(belief["conflicting_evidence"]) * 0.15, 0.4)
+    gap_term = min(len(belief["knowledge_gaps"]) * 0.1, 0.3)
+    return min(confidence_term + conflict_term + gap_term, 1.0)
 ```
 
-This acts like a curiosity signal. If the agent finds conflicting information, its entropy spikes, triggering more robust verification steps.
+High entropy → continue researching. Low entropy → synthesize and return. This creates a **curiosity signal** — the agent keeps searching not because it was told to, but because its own uncertainty drives it.
 
-## The Tech Stack
+---
 
-- **Framework**: LangGraph & LangChain
-- **LLM**: OpenAI GPT-4o / Ollama (Pluggable)
-- **Memory**: ChromaDB (Vector Store) for semantic context retrieval
-- **Tools**: DuckDuckGo Search, Custom Web Scraper
-- **Backend**: Python, FastAPI
+## The PLAN Node: Decomposition
 
-## Why "Deep" Research?
+Before searching, the agent decomposes the original query into targeted sub-questions:
 
-Most RAG (Retrieval-Augmented Generation) systems are one-shot: Query -> Search -> Answer.
+```python
+async def plan(state: AgentState, config: RunnableConfig):
+    prompt = f"""
+    Research query: {state.query}
+    
+    Decompose this into 3-5 specific sub-questions that, when answered together,
+    would allow you to fully address the original query.
+    Return a JSON list of strings.
+    """
+    response = await llm.ainvoke([HumanMessage(content=prompt)], config)
+    return {"sub_questions": parse_json_list(response.content)}
+```
 
-This agent is **multi-turn and stateful**. It might search for "Agentic AI trends", read a blog, realize it doesn't understand "Active Inference", perform a sub-search on that specific topic, and then synthesize everything back into the main answer. It mimics the rabbit holes a human researcher goes down (but much faster).
+This is important: a single broad query is a terrible search input. "What are the implications of AI on software engineering jobs?" → terrible. Breaking it into "What specific tasks are being automated by Copilot-like tools?", "What new roles are emerging due to AI tooling?", "What do economists say about net job displacement in software?" → much better signal-to-noise on retrieval.
 
-## Future Roadmap
+---
 
-I am currently working on adding **Recursive Hierarchical Planning**, allowing the agent to spawn sub-agents for massive research tasks (e.g., "Write a market report on EV batteries"), where each sub-agent handles one section of the report.
+## The EXECUTE Node: Tool Use
 
-Start building your own agents — the shift from "Chatbot" to "Cognitive Agent" is here.
+The agent has two tools: `search_web` (DuckDuckGo API) and `visit_page` (custom HTML scraper). For each sub-question still in `knowledge_gaps` or not yet addressed, it calls these tools:
+
+```python
+async def execute(state: AgentState, config: RunnableConfig):
+    questions_to_research = state.belief_state.get("knowledge_gaps", state.sub_questions)
+    
+    new_outputs = []
+    for question in questions_to_research[:3]:  # cap per cycle
+        results = await search_tool.ainvoke({"query": question})
+        for result in results[:2]:
+            page_content = await visit_page_tool.ainvoke({"url": result.url})
+            new_outputs.append(ToolOutput(
+                question=question,
+                source=result.url,
+                content=page_content[:3000]  # chunked
+            ))
+    
+    return {"tool_outputs": state.tool_outputs + new_outputs}
+```
+
+Note: I cap the research scope per cycle. Without that, the agent rabbit-holes indefinitely. Real research discipline means knowing when you have *enough* context for a useful update — not when you've read everything.
+
+---
+
+## Storage: ChromaDB for Semantic Memory
+
+Between cycles, tool outputs are embedded and stored in ChromaDB. Before each EXECUTE cycle, the agent retrieves relevant context from previous cycles:
+
+```python
+# Embed and store each new tool output
+collection.add(
+    documents=[output.content for output in new_outputs],
+    metadatas=[{"source": output.source, "question": output.question} for output in new_outputs],
+    ids=[generate_id(output) for output in new_outputs]
+)
+
+# Retrieve relevant past context for current cycle
+past_context = collection.query(
+    query_texts=[state.query],
+    n_results=5
+)
+```
+
+This prevents redundant fetching and allows the agent to cross-reference earlier findings in later synthesis. It's why I chose ChromaDB — local, fast, zero infrastructure, and sufficient for per-session memory.
+
+---
+
+## Tech Stack Choices — and Why
+
+| Component | Choice | Why not X |
+|-----------|--------|-----------|
+| Orchestration | LangGraph | LangChain chains can't loop with state. LangGraph gives typed state + conditional edges. |
+| Memory | ChromaDB | Pinecone is managed but overkill for session memory. pgvector requires Postgres. Chroma runs local in-process. |
+| LLM | OpenAI / Ollama (pluggable) | Ollama for offline dev, OpenAI for production quality. Abstracted behind a common interface. |
+| Search | DuckDuckGo | No API key, no quota. Good enough for research signal. Not using Google because rate limiting is brutal for multi-step agents. |
+| Backend | FastAPI | Stateless HTTP interface over the graph. FastAPI's async support fits perfectly with LangChain's `ainvoke`. |
+
+---
+
+## What I'd change in v2
+
+- **Recursive sub-agents**: For large research tasks ("Write a market report on X"), spawn sub-agents per section, each running their own belief-entropy loop. Merge belief states via a coordinator.
+- **Source credibility scoring**: Not all web pages are equal. Add a credibility score to `ToolOutput` and weight it in entropy calculation.
+- **Persistent memory across sessions**: Currently, ChromaDB is ephemeral per-run. Moving to a persistent store (pgvector or a managed Chroma instance) would allow the agent to remember past research sessions.
+- **Tool parallelism**: Currently sequential. Switch to `asyncio.gather` across sub-questions for 3–5x throughput on the EXECUTE node.
+
+---
+
+## Takeaway
+
+Building this agent taught me that the hard problem in agentic AI isn't the LLM — it's the **orchestration logic** that decides when to stop, when to doubt, and when to dig deeper. The Belief State + Entropy approach gives the agent genuine epistemic humility. It doesn't answer when it doesn't know enough.
+
+That distinction — between an agent that answers confidently and one that answers *correctly* — is the real frontier.

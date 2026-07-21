@@ -1,266 +1,268 @@
 ---
-title: "Bee4By — building VehicleForum"
+title: "Building VehicleForum (Bee4By): Designing for Trust, Not Just Features"
 date: "2026-01-05"
-description: "A portfolio-style walkthrough of how I built Bee4By (VehicleForum) — a community forum for vehicle owners and enthusiasts using TypeScript, Next.js, and Vercel."
+description: "How I approached building a vehicle community forum — and why the interesting engineering decisions weren't about the CRUD, but about trust signals, upload reliability, and what to delegate vs. build."
 ---
 
-# Bee4By — building VehicleForum
+# Building VehicleForum (Bee4By): Designing for Trust, Not Just Features
 
-_Project: Bee4By (VehicleForum) — a community forum for vehicle owners and enthusiasts_
+Community forums sound like solved problems. Post, comment, upvote, moderate. The CRUD is trivial. The hard part is trust: making users feel safe submitting content, making readers feel safe consuming it, and making the system resilient enough to stay up when people actually use it.
 
----
-
-## TL;DR
-
-I built Bee4By (VehicleForum) to give vehicle owners a focused place to ask questions, share tips, and discuss maintenance and modifications. The app is a modern TypeScript web app with a simple, mobile-first UI, user accounts, posts, comments, image uploads, and basic moderation. My main concerns were performance and trust (auth + content moderation), so I focused on pragmatic design decisions: keep the frontend snappy, push heavy tasks to background or managed services, and design data models to be extensible but simple.
+VehicleForum (Bee4By) is a niche community for vehicle owners — Q&A, maintenance tips, modification discussions, grouped by make/model. This is a walkthrough of the decisions that mattered most, and why.
 
 ---
 
-## Why I built it (motivation & aim)
+## Why niche beats general
 
-I wanted to build something practical that solves a common problem: scattered knowledge about vehicle maintenance and modifications. The idea was simple — bring the conversations into one place, encourage community contributions, and make it easy to find trusted answers.
+The temptation with forums is to build horizontally — any topic, any user. Reddit already exists. The valuable opportunity is depth: a forum specifically for vehicle owners has fundamentally different content than a general Q&A.
 
-Goals I set for myself:
+Vehicle make/model tagging enables a query pattern impossible on Reddit: "Show me everything about my 2008 Toyota Corolla with at least 3 upvotes from users who've owned the same car for 2+ years." That's a trust signal impossible to replicate without domain-specific data modeling.
 
-- Fast, readable UI that works on mobile.
-- Low friction to post: quick image uploads, minimal form fields.
-- Trust: simple authentication and a basic moderation flow.
-- Scalable foundation so features can be added later (search, tags, private messaging).
-
----
-
-## High-level user flow
-
-- User signs up / logs in.
-- User creates a post (title, body, optional images, vehicle tags).
-- Other users comment, vote/upvote, or bookmark posts.
-- Moderation tools allow flagging and basic admin actions.
-- Optional: search and filter by vehicle make/model, tags, or recent activity.
-
----
-
-## System design and architecture
-
-I kept the architecture intentionally straightforward so it’s maintainable and easy to iterate on.
-
-ASCII overview:
-
-```
-[Browser (Next.js/React)]  <--HTTPS-->  [Edge CDN (Vercel)]
-        |                                   |
-        |-- REST / GraphQL API routes -----> [API (Node/Serverless)]
-        |                                   |
-        |                                   +--> [DB (MongoDB/Postgres)]
-        |                                   +--> [Storage (S3/Cloudinary)]
-        |                                   +--> [Auth (NextAuth/Firebase)]
-        |                                   +--> [Search (Algolia) - optional]
-        |                                   +--> [Background workers / Queue]
-```
-
-Key design choices
-
-- Frontend: React + TypeScript (Next.js recommended) for server-side rendering and easy Vercel deployment.
-- API: Next.js API routes or a small Node/Express server with TypeScript. Keep business logic server-side for validation and auth.
-- Database: Document DB (MongoDB) or relational (Postgres) depending on preference. Posts and comments map naturally to documents; relational is better if you need strong consistency.
-- Auth: Use a managed solution (NextAuth with OAuth providers or Firebase Auth) to avoid building your own password flows.
-- Images: Store in object storage (S3 or Cloudinary) and serve via CDN. Process uploads through a signed upload flow to avoid routing large files through your server.
-- Deployment: Vercel for frontend (and serverless API routes), database hosted separately (Atlas or managed Postgres), CI via GitHub Actions.
-
----
-
-## Data model — core entities
-
-Example TypeScript interfaces (keeps things explicit for employers reading your code):
+The `Post` entity reflects this from the start:
 
 ```ts
-// Post.ts
 export interface Post {
   id: string;
   authorId: string;
   title: string;
-  body: string;
-  vehicleTags?: string[]; // e.g. ["Toyota", "Corolla", "2008"]
-  images?: string[]; // URLs to CDN
+  body: string;                          // markdown
+  vehicleTags: VehicleTag[];            // [{ make: "Toyota", model: "Corolla", year: 2008 }]
+  images: string[];                      // CDN URLs, not data
   createdAt: string;
-  updatedAt?: string;
   upvotes: number;
   commentsCount: number;
-  status?: "active" | "flagged" | "deleted";
+  status: "active" | "flagged" | "archived";
+  resolvedAt?: string;                   // marks accepted solution
+}
+
+export interface VehicleTag {
+  make: string;
+  model: string;
+  year?: number;
 }
 ```
 
-```ts
-// Comment.ts
-export interface Comment {
-  id: string;
-  postId: string;
-  authorId: string;
-  body: string;
-  createdAt: string;
-  upvotes: number;
-  status?: "active" | "flagged" | "deleted";
-}
-```
-
-If using MongoDB + Mongoose, schemas would follow a similar structure. If using Prisma + Postgres, model definitions would map to these fields with relations.
+Why `vehicleTags` as an array? A user asking about a drivetrain issue might be relevant to both a 2008 and 2009 Corolla with identical drivetrains. Allowing multiple tags means better discoverability without creating duplicate posts.
 
 ---
 
-## Example API design
+## Data model: where to use documents vs. relations
 
-Minimal REST endpoints:
+I chose **PostgreSQL** over MongoDB for this project. Here's the reasoning, because this matters:
 
-- POST /api/signup, POST /api/login (or use NextAuth)
-- GET /api/posts?tag=&page=
-- GET /api/posts/:id
-- POST /api/posts — create
-- PUT /api/posts/:id — update (author only)
-- POST /api/posts/:id/comments
-- POST /api/uploads/sign — return signed upload URL
-- POST /api/flags — to flag content
+- Posts have predictable shapes. The variability (vehicle tags, optional images) fits well in `JSONB` columns or simple optional fields — I don't need a document store for this.
+- Comments form a DAG. Postgres handles the parent-child query efficiently; MongoDB nested documents hit limits at depth.
+- Transactions matter: when a user upvotes, I need to atomically increment `posts.upvotes` AND update a `user_upvotes` junction table to prevent double-voting. MongoDB multi-document transactions are available but Postgres handles this more naturally.
+- I want `GROUP BY` vehicle make/model for analytics. This is simple SQL; it's a MapReduce job in MongoDB.
 
-A simple fetcher util with SWR for optimistic UI:
+The one place I used `JSONB` was `vehicle_tags` on the `posts` table — because the make/model structure is nested and query patterns are by individual fields, not across the whole array:
+
+```sql
+-- Efficient query for all posts tagged with Toyota Corolla
+SELECT * FROM posts
+WHERE vehicle_tags @> '[{"make": "Toyota", "model": "Corolla"}]'::jsonb
+AND status = 'active'
+ORDER BY created_at DESC
+LIMIT 20;
+
+-- Index to make this fast
+CREATE INDEX idx_posts_vehicle_tags 
+  ON posts USING GIN(vehicle_tags jsonb_path_ops);
+```
+
+`GIN` (Generalized Inverted Index) is specifically designed for containment queries (`@>`) on JSONB. A B-tree index doesn't work here. This is the kind of thing that separates production databases from tutorial databases.
+
+---
+
+## Image uploads: the signed URL pattern
+
+Routing images through your application server is one of the most common performance mistakes in web development:
+
+```
+❌ Bad:  Browser → Your Server (process/store file) → S3
+✓ Good: Browser → S3/Cloudinary directly (signed upload URL)
+        Browser → Your Server (confirm upload, save CDN URL)
+```
+
+The second pattern:
+1. Your server generates a short-lived signed upload URL (AWS S3 presigned URL or Cloudinary upload signature)
+2. Browser uploads directly to the CDN — your server never touches the file bytes
+3. Browser confirms the upload to your server; you save the resulting CDN URL
 
 ```ts
-// fetcher.ts
-export const fetcher = (url: string) =>
-  fetch(url).then((res) => {
-    if (!res.ok) throw new Error("Network error");
-    return res.json();
+// Backend: generate presigned URL
+async function getUploadUrl(req: FastifyRequest, reply: FastifyReply) {
+  const { filename, contentType } = req.body as { filename: string; contentType: string };
+  
+  // Validate content type — only accept image/* types
+  if (!contentType.startsWith("image/")) {
+    return reply.status(400).send({ error: "Only image uploads are allowed" });
+  }
+  
+  const key = `posts/${req.user.id}/${Date.now()}-${sanitizeFilename(filename)}`;
+  
+  const command = new PutObjectCommand({
+    Bucket: process.env.S3_BUCKET!,
+    Key: key,
+    ContentType: contentType,
+    // Enforce max size at S3 level
+    Conditions: [["content-length-range", 0, 10_000_000]], // 10MB max
   });
-
-// In a component:
-const { data, mutate } = useSWR("/api/posts", fetcher);
-
-// optimistic create
-async function createPost(payload) {
-  const temp = [{ id: "temp-" + Date.now(), ...payload }];
-  mutate([...data, ...temp], false); // optimistic
-  await fetch("/api/posts", { method: "POST", body: JSON.stringify(payload) });
-  mutate(); // revalidate
+  
+  const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+  const cdnUrl = `${process.env.CDN_BASE_URL}/${key}`;
+  
+  return { uploadUrl: presignedUrl, cdnUrl };
 }
 ```
 
----
+This pattern:
+- Your server handles zero file bytes — no bandwidth cost, no memory pressure
+- The 10MB limit is enforced by S3 before any bytes are transferred to S3 — not by your server checking `Content-Length`
+- URL expires in 5 minutes — prevents presigned URL reuse
 
-## UI / UX decisions
+### Client-side compression before upload
 
-- Mobile-first responsive layout; most users will browse on the go.
-- Minimal forms: title + body + optional images. Use auto-save to drafts for long posts.
-- Use component-based UI (atomic components) to keep design consistent and reusable.
-- Optimistic updates and skeleton loaders to make interactions feel instant.
-- Accessibility basics: semantic HTML, labels, keyboard focus.
+Even with direct-to-CDN uploads, mobile devices can produce 8MB photos. I compress on the client before the presigned URL fetch:
 
----
+```ts
+async function compressAndUpload(file: File): Promise<string> {
+  const compressed = await imageCompression(file, {
+    maxSizeMB: 2,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true, // don't block the main thread
+  });
+  
+  const { uploadUrl, cdnUrl } = await api.getUploadUrl({
+    filename: file.name,
+    contentType: compressed.type,
+  });
+  
+  await fetch(uploadUrl, {
+    method: "PUT",
+    body: compressed,
+    headers: { "Content-Type": compressed.type },
+  });
+  
+  return cdnUrl;
+}
+```
 
-## Technical challenges and how I addressed them
-
-1. Image uploads and bandwidth
-
-   - Problem: large images slow uploads and waste bandwidth.
-   - Remedy: Client-side image resizing / compression before upload + signed direct-to-S3 / Cloudinary uploads. Generate thumbnails server-side or via CDN transforms.
-
-2. Trust / Moderation
-
-   - Problem: public forums attract spam and abuse.
-   - Remedy: Rate limiting, reCAPTCHA on signup, simple flagging flow for users, and an admin dashboard to review flagged posts. Automated filters for known bad words and basic heuristic spam checks.
-
-3. Authentication without reinventing the wheel
-
-   - Problem: Building secure auth is hard.
-   - Remedy: Use NextAuth or Firebase Auth for secure sign-in and social providers; store minimal session info server-side; enforce server-side checks for write actions.
-
-4. Search and discoverability
-
-   - Problem: naive DB queries don’t scale for search.
-   - Remedy: Offload to Algolia or ElasticSearch for full-text searches and robust filters. Keep the DB as the source of truth and sync on writes.
-
-5. Maintaining snappy UX under load
-
-   - Problem: too many synchronous operations slow down the UI.
-   - Remedy: Use optimistic UI, cache with SWR/React Query, paginate posts, prefetch likely content, and keep API responses small (send counts, not large nested objects).
-
-6. Keeping costs manageable
-   - Problem: managed services cost money as scale grows.
-   - Remedy: Start with free/cheap tiers for DB (MongoDB Atlas free tier), use serverless on Vercel, and adopt cost-efficient CDN and storage choices. Implement caching to reduce DB reads.
+`useWebWorker: true` is not optional — compression is CPU-intensive and will visibly freeze the UI on mobile if you run it on the main thread.
 
 ---
 
-## Design decisions and trade-offs (why I picked what I did)
+## Trust mechanisms: beyond "add moderation"
 
-- Serverless APIs (Next.js API routes) vs running an always-on server:
+"Add moderation" is not a strategy. Here's what I actually implemented:
 
-  - I picked serverless initially for simplicity and low cost at small scale.
-  - Trade-off: long-running jobs and complex background processing need a separate worker service if required.
+### Idempotent post creation
 
-- MongoDB (document) vs Postgres (relational):
+Users on mobile with poor connections hit "Post" multiple times. Naive handler = duplicate posts. Solution: **idempotency keys**:
 
-  - Documents map well to posts + comments and allow iterative schema changes.
-  - Trade-off: relations like complex joins or strong transactions favor Postgres.
+```ts
+// Client includes a random idempotency key with each create request
+const createPost = async (payload: CreatePostPayload) => {
+  const idempotencyKey = crypto.randomUUID();
+  return api.post("/posts", payload, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
+};
 
-- Managed Auth vs custom auth:
-  - I used a managed/auth library to reduce risk and accelerate development.
-  - Trade-off: less fine-grained control, but much better for security.
+// Server uses the key to deduplicate
+async function createPostHandler(req, reply) {
+  const key = req.headers["idempotency-key"];
+  
+  // Check if this key was already processed
+  const cached = await redis.get(`idem:${key}`);
+  if (cached) {
+    return JSON.parse(cached); // return the original response
+  }
+  
+  const post = await db.posts.create({ data: req.body });
+  
+  // Cache the response for 24 hours
+  await redis.setex(`idem:${key}`, 86400, JSON.stringify(post));
+  
+  return post;
+}
+```
 
----
+This is safer than "disable the button after click" — that fails when JavaScript errors mid-request.
 
-## Testing, CI/CD, and deployment
+### Rate limiting with Redis sliding window
 
-- CI: GitHub Actions to run TypeScript checks, linting, and unit tests.
-- Preview environments: Use Vercel preview deployments on PRs so stakeholders can review UI quickly.
-- Environment variables: keep secrets in Vercel / GitHub Secrets; never commit them.
-- Migrations: For relational DBs, use a migration tool (Prisma Migrate). For MongoDB, store versioned migration scripts.
+```ts
+// 5 posts per user per hour — sliding window, not fixed bucket
+async function rateLimitPosts(userId: string): Promise<boolean> {
+  const key = `rate:posts:${userId}`;
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000; // 1 hour
+  
+  const pipeline = redis.pipeline();
+  pipeline.zadd(key, now, `${now}`);              // add current timestamp
+  pipeline.zremrangebyscore(key, 0, now - windowMs); // remove old entries
+  pipeline.zcard(key);                             // count in window
+  pipeline.expire(key, 3600);                     // TTL cleanup
+  
+  const results = await pipeline.exec();
+  const count = results[2][1] as number;
+  
+  return count <= 5;
+}
+```
 
----
-
-## Security and privacy considerations
-
-- Sanitize user input (both server and client) to prevent XSS.
-- Validate and whitelist uploaded file types and sizes.
-- Use HTTP-only cookies for sessions when appropriate; otherwise, protect JWTs.
-- Implement rate-limiting on write endpoints to slow down automated attacks.
-- Minimal data retention: store only what’s necessary for features.
-
----
-
-## Problems I ran into (real examples) and remedies
-
-- Slow image uploads in poor networks:
-
-  - Implemented client-side compression (browser-image-compression) and chunked uploads for very large files.
-
-- Duplicate posts from impatient users hitting submit multiple times:
-
-  - Added a server-side idempotency token and disabled the submit button while a request is in-flight.
-
-- Unexpected edge-case with comment threading:
-
-  - Initially allowed nested comments, which complicated rendering and counts. Switched to flat comments with "replyTo" reference to simplify both storage and UI.
-
-- Search results mismatches (e.g., stemming, stop words):
-  - Moved search to Algolia for better relevance and to provide instant results and typo tolerance.
-
----
-
-## What I learned
-
-- Small, pragmatic choices early (use managed auth, delegate search and storage) speed up development and reduce long-term maintenance.
-- UX feels faster when you rely on optimistic UI and prefetching; users forgive eventual inconsistencies if actions feel immediate and recoverable.
-- Designing for simple moderation from day one avoids big headaches later.
-- Keep your data model flexible — early choices to restrict it too much create migration pain.
-
----
-
-## Next steps / features I’d add
-
-- Personalization: follow users, save favorite tags, personalized feed.
-- Reactions and reputation system (lightweight) to increase trust.
-- Advanced moderation tools: bulk actions, role-based admin, automated spam classification.
-- Notifications (web push / email) for replies and mentions.
-- Analytics for trending topics and vehicle models.
+Sliding window (using a sorted set with timestamps as scores) is more accurate than a fixed bucket. A fixed bucket allows bursting at window boundaries — 5 posts at 11:59 and 5 more at 12:00. The sliding window prevents this.
 
 ---
 
-## Closing — how I built it (short story)
+## Search: why I deferred Algolia and used Postgres full-text search first
 
-I approached Bee4By like building a useful tool rather than a showcase of technical wizardry. I started small: core post/comment flow, basic user auth, and image attachments. I then iterated — improving upload reliability, adding optimistic updates to make the interface feel faster, and introducing basic moderation. Whenever a problem became complex (search, heavy image processing, auth), I used a managed service or a small background worker instead of trying to do everything in-house. The result is a practical, maintainable forum that solves the immediate problem and can scale as the community grows.
+Algolia is excellent. It's also $50/month for a hobby project. I started with Postgres full-text search:
+
+```sql
+-- Add a generated tsvector column
+ALTER TABLE posts ADD COLUMN search_vector tsvector 
+  GENERATED ALWAYS AS (
+    to_tsvector('english', 
+      coalesce(title, '') || ' ' || 
+      coalesce(body, '')
+    )
+  ) STORED;
+
+CREATE INDEX idx_posts_fts ON posts USING GIN(search_vector);
+
+-- Query
+SELECT id, title, ts_rank(search_vector, query) AS rank
+FROM posts, to_tsquery('english', 'brake AND noise') query
+WHERE search_vector @@ query AND status = 'active'
+ORDER BY rank DESC
+LIMIT 20;
+```
+
+Postgres FTS handles stemming (`brake` matches `brakes`, `braking`), stop words, and ranking. It's not Algolia — no typo tolerance, no synonyms — but it covers 80% of use cases with zero external dependencies and zero additional cost.
+
+I'd migrate to Algolia when search query latency exceeds 500ms or search quality noticeably impacts engagement metrics. Not before.
+
+---
+
+## What I delegated and why
+
+| Problem | Delegated to | Why not build it |
+|---------|-------------|------------------|
+| Auth | NextAuth (Google + GitHub OAuth) | Session security, token rotation, PKCE — these are solved hard problems. Reinventing them creates attack surface. |
+| Images | S3 + CloudFront | Storage, CDN, global delivery — not core product value. |
+| Email | Resend | Transactional email deliverability is a full-time job. |
+| Search | Postgres FTS (→ Algolia later) | Postgres handles early stage; migrate when constraints appear. |
+
+The pattern: **delegate anything where failure means a security incident or reliability problem you're not equipped to handle**. Build everything that is core product differentiation.
+
+---
+
+## Lessons
+
+**Niche communities need domain-specific data models**: Vehicle tags aren't just a string field — they're structured data that enables the queries that make the forum valuable.
+
+**Trust mechanisms compound**: idempotency + rate limiting + authenticated writes create multiple overlapping layers. Any single layer can be bypassed; together they're effective.
+
+**Postgres is underrated**: GIN indexes on JSONB, full-text search, window functions, advisory locks — Postgres handles the majority of use cases that teams reach for Redis, Elasticsearch, or MongoDB for. Know the tool you have before adding a new one.

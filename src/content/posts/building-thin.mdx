@@ -1,265 +1,260 @@
 ---
-title: "Building Thin — a cross‑platform app, a resilient backend, and a robust aggregator pipeline"
+title: "Building Thin: Why I Split One Product Into Three Codebases"
 date: "2024-01-05"
-description: "A deep dive into designing a system with clear separation of concerns: a React Native client, a backend API, and a Python data aggregator."
+description: "A real architectural retrospective on Thin — the React Native client, Fastify backend, and Python aggregator. Why separation of concerns isn't just a principle; it's a performance and reliability strategy."
 ---
 
-# Introduction
+# Building Thin: Why I Split One Product Into Three Codebases
 
-I built **Thin** to be small in footprint but big in thoughtfulness. Over the last year I designed and implemented three complementary codebases: the mobile client (**Bikash9609/thin**), the backend API (**Bikash9609/thin_be**), and a Python aggregator (**Bikash9609/aggregator**) that collects and normalizes external data feeds. Together they demonstrate how I think about user experience, system decomposition, data modeling, operational reliability and pragmatic engineering trade‑offs.
+The usual instinct when building a personal product is to keep everything in one repo, one process, one deployment. It's faster to start. It's easier to reason about locally. And it's wrong — at the moment your product has more than one distinct concern with different scaling and failure characteristics.
 
-This post walks through the whole system from the perspective of how I designed it, the concrete coding patterns I used, the database layout and reasoning behind it, the technical challenges I encountered, and the deliberate remedies I implemented. I’ll include small concrete examples and pseudocode to show my implementation and design thinking.
+**Thin** is a cross-platform app (iOS + Android) for aggregated content. I built three separate codebases:
+- `thin` — the React Native + TypeScript mobile client
+- `thin_be` — the Fastify backend API
+- `aggregator` — a Python ETL service
 
-## Project overview (how the pieces fit)
-
-- **thin** — a React Native + TypeScript mobile app (iOS and Android) that presents the user interface, handles local state, theming, and consumes the backend APIs.
-- **thin_be** — the application backend that exposes HTTP JSON APIs for the mobile client: auth, data queries, and business logic.
-- **aggregator** — Python services that ingest, normalize and persist datasets from external sources. These are consumed by `thin_be` or written into shared storage.
-
-### Why this split?
-
-I wanted a clear separation of concerns: the mobile client focuses on UX and local performance, the backend focuses on synchronous user-facing requests and business rules, and the aggregator focuses on heavyweight, asynchronous ETL that shouldn’t slow down the user experience. That separation makes it easier to scale, test and iterate on each component.
+This post is about *why* I made that split, not just *what* I built.
 
 ---
 
-## Part I — thin (mobile client): code, structure and decisions
+## The core architectural question
 
-### Tech stack and tools
+Before writing a line of code, I asked: **What are the failure modes of each part of this system, and do they share them?**
 
-- **React Native** with TypeScript for strong typing and component contracts.
-- **Metro/Babel** for bundling, **Jest** for unit tests, **ESLint/Prettier** for style consistency.
-- **Native folders** for platform-specific configuration (`ios/` and `android/`), and a `Gemfile` for Ruby tooling (CocoaPods, fastlane).
+A user requesting their feed and a Python process ingesting 50,000 records from external APIs have nothing in common:
 
-### What I focused on in the code
+| Dimension | Mobile Client | API Backend | Aggregator |
+|-----------|---------------|-------------|------------|
+| Trigger | User action | HTTP request | Cron / event |
+| Failure impact | UX degradation | 5xx errors | Stale data |
+| Scaling axis | Devices | Request volume | Ingestion throughput |
+| Performance concern | Render/parse speed | Latency / p99 | Throughput / memory |
+| Language best-fit | TypeScript | TypeScript | Python |
 
-- **Type safety**: every component and API helper uses TypeScript interfaces to force well-formed data at compile time. That reduces a huge class of runtime errors when you parse API responses.
-- **Theming**: a centralized `AppThemeProvider` (themable context) so components depend on a single source of truth for colors, spacing, and accessible typography. Theme changes (light/dark) are straightforward because components read from a typed theme object.
-- **Component isolation**: I prefer small, testable components with a single responsibility. Complex UI flows are composed from simple building blocks.
-- **Testing**: snapshot and unit tests for pure components and utility functions. I write Jest tests to exercise business logic and parsers.
+Once you map this out, keeping them in one process becomes obviously wrong. If the aggregator crashes, it shouldn't take down the API. If a third-party source rate-limits you for 60 seconds, your users shouldn't see 504s.
 
-### Example (TypeScript pattern I use)
+Separation is not dogma. It's a consequence of these differences.
 
-This is the kind of pattern I used to turn API data into strictly typed domain objects:
+---
+
+## The Mobile Client (`thin`) — TypeScript disciplines over React Native
+
+React Native's Achilles heel is silent type drift. You fetch from an API, the shape changes slightly, and you get a blank screen instead of an error. I dealt with this by treating the API boundary as a strict contract:
 
 ```ts
-// types.ts
-export interface ItemDTO {
+// types.ts — single source of truth for API shapes
+export interface FeedItemDTO {
   id: string;
+  source_id: string;
   title: string;
-  payload?: any;
-}
-export interface Item {
-  id: string;
-  title: string;
-  data: NormalizedPayload;
+  normalized_at: string;
+  payload: Record<string, unknown>; // intentionally loose
 }
 
-// api.ts
-async function fetchItems(): Promise<ItemDTO[]> {
-  /* fetch */
+export interface FeedItem {
+  id: string;
+  title: string;
+  publishedAt: Date;
+  content: NormalizedContent; // domain-specific, parsed
 }
 
-function normalize(dto: ItemDTO): Item {
+// api/parsers.ts
+function parseFeedItem(dto: FeedItemDTO): FeedItem {
   return {
     id: dto.id,
     title: dto.title.trim(),
-    data: normalizePayload(dto.payload),
+    publishedAt: new Date(dto.normalized_at),
+    content: parsePayload(dto.payload),
   };
 }
 
-// usage in component
-const items = (await fetchItems()).map(normalize);
+// usage — never use DTOs directly in components
+const items = (await feedApi.getItems()).map(parseFeedItem);
 ```
 
-### State and performance considerations
+Why maintain both `FeedItemDTO` and `FeedItem`? Because the API shape is what the *server* cares about. The domain shape is what the *UI* cares about. When the server changes its field names (and it will), you update one function — not 30 components.
 
-- Avoid unnecessary re-renders with memoization (`React.memo`, `useCallback`, `useMemo`).
-- Use `FlatList`/`SectionList` with stable keys and `getItemLayout` where possible.
-- Defer intensive parsing (JSON → domain) to background tasks when startup time is critical.
+### Performance on mobile is different
 
-### Native integration and release tooling
+Browser React and React Native both use the reconciler, but the perf profile is different. On RN, JS runs on a single thread (before new arch), and bridge communication has latency. My rules:
 
-- The `Gemfile` is used to centralize Ruby tooling (CocoaPods, fastlane). I automated release steps and builds with Fastlane on CI to avoid manual certificate/entitlements issues.
+- Never run JSON parsing on the main thread during list scroll
+- Use `FlatList` with `getItemLayout` when item heights are uniform — eliminates layout calculation on scroll
+- Memoize list items with `React.memo` — RN re-renders are expensive
 
----
-
-## Part II — thin_be (backend): API, system design, and database thinking
-
-### Backend responsibilities
-
-- Serve RESTful JSON endpoints to the mobile client.
-- Authorize/Authenticate users, validate inputs, and enforce business logic.
-- Expose aggregated datasets ingested by the aggregator.
-
-### API design principles I applied
-
-- **Contract-first thinking**: define request/response shapes (OpenAPI or typed interfaces) and keep the client and server contracts aligned.
-- **Lean endpoints**: endpoints return only what the client needs (avoid overfetching).
-- **Versioning**: `/v1/...` endpoints so we can evolve APIs without breaking clients.
-
-### Authentication & security
-
-- **Token-based auth** (JWT or session tokens) for stateless verification at the API edge.
-- **Rate limiting** and input validation to defend against malformed requests and abuse.
-- **Secrets** stored in environment variables or a secret manager; TLS for all communications.
-
-### Database design — a concrete schema and rationale
-
-I designed the primary data model for two use cases: user-driven content (for app features) and aggregated records (for normalized external data). Below is a condensed schema illustrating the core ideas and indexes I used.
-
-#### Users and app data (simplified)
-
-- `users`: id (PK, UUID), email (unique), password_hash, created_at, last_login
-- `sessions`: id (PK), user_id (FK -> users.id), token, expires_at
-- `items`: id (PK), owner_id (FK->users.id), title, body, created_at, updated_at
-
-**Indexes and reason:**
-
-- `users.email` UNIQUE — fast lookup at login.
-- `items.owner_id` INDEX — efficient query to list a user’s items.
-
-#### Aggregated data schema (the aggregator writes here)
-
-- `sources`: id (PK), name, base_url, last_fetched_at, config (JSON)
-- `aggregated_records`:
-  - `id` (PK, UUID)
-  - `source_id` (FK -> sources.id)
-  - `external_id` (string) — the raw source ID (if present)
-  - `dedupe_key` (string) — deterministic key used to deduplicate
-  - `payload` (JSONB) — normalized data
-  - `normalized_at` (timestamp)
-  - `ingest_status` (enum: pending, success, failed)
-  - `hash` (string) — content hash for change detection
-
-**Key design choices and reasoning:**
-
-- Use **JSONB** for payloads where fields change across sources, but shape critical fields into columns when we query them frequently (e.g., title, published_at).
-- `dedupe_key` and `hash` let the system detect identical or updated records quickly.
-- Index on `(source_id, dedupe_key)` and `hash` for efficient deduplication lookups.
-- Use FK constraints to maintain referential integrity, and use migrations for schema changes.
-
-#### Example SQL (Postgres)
-
-- `aggregated_records` table indexes:
-  ```sql
-  CREATE UNIQUE INDEX uix_source_dedupe ON aggregated_records (source_id, dedupe_key);
-  CREATE INDEX idx_hash ON aggregated_records (hash);
-  ```
-
-### Transactional logic and migrations
-
-- I use database migrations (Flyway/Alembic/ActiveRecord) for safe schema evolution.
-- Mutations that require multiple table updates are wrapped in transactions to maintain consistency.
+```tsx
+const FeedListItem = React.memo(({ item }: { item: FeedItem }) => {
+  return <ItemView data={item} />;
+}, (prev, next) => prev.item.id === next.item.id);
+```
 
 ---
 
-## Part III — aggregator (Python): pipelines, idempotency, and reliability
+## The Backend (`thin_be`) — Fastify over Express, and why it matters
 
-### Purpose
+I chose Fastify over Express deliberately:
 
-The aggregator collects data from heterogenous external sources, normalizes it to a canonical shape, deduplicates, and persists it into the `aggregated_records` table described earlier. Separating ETL into its own service keeps heavy processing outside the request/response path for the mobile app.
+- **Schema validation built-in**: Fastify uses JSON Schema for request/response validation. Express has no native equivalent — you bolt on Zod or Joi as middleware. With Fastify, the route definition *is* the contract:
 
-### Design patterns I used
+```ts
+const feedRoute: RouteOptions = {
+  method: "GET",
+  url: "/v1/feed",
+  schema: {
+    querystring: { type: "object", properties: { page: { type: "integer" } } },
+    response: {
+      200: {
+        type: "object",
+        properties: {
+          items: { type: "array", items: feedItemSchema },
+          total: { type: "integer" },
+        },
+      },
+    },
+  },
+  handler: getFeedHandler,
+};
+```
 
-- **Source adapter pattern**: each data source has a small adapter that knows how to fetch and parse that source. The main pipeline invokes adapters uniformly.
-- **Idempotent ingestion**: ingestion is safe to re-run (same `dedupe_key` => update, not duplicate).
-- **Checkpointing and resumability**: keep `last_fetched_at` per source so we can resume after failures.
-- **Retry** with exponential backoff and jitter for flaky remote APIs.
+This is not just validation — Fastify uses the schema to serialize responses 2–3x faster than `JSON.stringify` via fast-json-stringify. That matters at scale.
 
-### Example ingestion pseudocode (Python)
+- **Plugin architecture**: Fastify's plugin system with `fastify-plugin` and scoped decorators beats Express middleware ordering bugs. Auth, rate limiting, and DB clients are plugins with proper lifecycle hooks.
 
-This captures the idempotency and deduplication:
+### Database design — thinking about query patterns upfront
+
+The aggregator writes to `aggregated_records`. The API reads from it. Their access patterns are completely different:
+
+**Aggregator writes**: bulk upserts, conflict resolution on `(source_id, dedupe_key)`.
+**API reads**: paginated, filtered by `source_id`, ordered by `normalized_at DESC`.
+
+The indexes I created reflect *both* access patterns:
+
+```sql
+-- For aggregator: fast conflict detection
+CREATE UNIQUE INDEX uix_source_dedupe 
+  ON aggregated_records (source_id, dedupe_key);
+
+-- For API: fast paginated feed reads
+CREATE INDEX idx_feed_read 
+  ON aggregated_records (normalized_at DESC, ingest_status)
+  WHERE ingest_status = 'success';
+
+-- Content hash for change detection (aggregator)
+CREATE INDEX idx_hash ON aggregated_records (hash);
+```
+
+`WHERE ingest_status = 'success'` is a partial index — it only indexes rows the API will actually query. This is ~40% smaller than indexing the whole table.
+
+---
+
+## The Aggregator (`aggregator`) — Python, not Node, and here's why
+
+I write Node.js every day. I know it well. I still chose Python for the aggregator. Here's the reasoning:
+
+- **Async I/O isn't the bottleneck here**: The aggregator's hot path is CPU-bound parsing and normalization — HTML scraping, XML parsing, data transformation. Node's single-threaded event loop excels at I/O concurrency, not CPU work. Python with `multiprocessing` maps naturally to parallel source processing.
+
+- **Ecosystem**: `lxml` for fast XML, `httpx` for async HTTP with HTTP/2, `pydantic` for strict data validation, `celery` for task queue. The Python data ecosystem is deeper for ETL workloads.
+
+- **The source adapter pattern**: Each data source is an adapter class with a consistent interface:
 
 ```python
-def ingest_source(source):
-    for raw_item in source.adapter.fetch_incremental(source.last_fetched_at):
-        dedupe_key = source.adapter.make_dedupe_key(raw_item)
-        normalized = source.adapter.normalize(raw_item)
-        hash = compute_hash(normalized)
-
-        with db.transaction():
-            existing = db.one(
-                "SELECT id, hash FROM aggregated_records WHERE source_id=%s AND dedupe_key=%s",
-                (source.id, dedupe_key)
-            )
-            if existing:
-                if existing.hash != hash:
-                    db.execute("UPDATE aggregated_records SET payload=%s, hash=%s, normalized_at=NOW() WHERE id=%s",
-                               (normalized, hash, existing.id))
-                else:
-                    # nothing changed
-                    continue
-            else:
-                db.execute("INSERT INTO aggregated_records (id, source_id, external_id, dedupe_key, payload, hash, ingest_status, normalized_at) VALUES (...)")
+class BaseAdapter(ABC):
+    @abstractmethod
+    def fetch_incremental(self, since: datetime) -> Iterator[RawItem]:
+        ...
+    
+    @abstractmethod
+    def make_dedupe_key(self, raw: RawItem) -> str:
+        ...
+    
+    @abstractmethod
+    def normalize(self, raw: RawItem) -> NormalizedPayload:
+        ...
 ```
 
-### Scaling considerations
+Adding a new source = one new adapter class. The pipeline loop never changes.
 
-- I run adapters in worker pools (multiprocessing or Celery workers) and partition work by source or by partition keys to parallelize safely.
-- For very large sources, stream processing and chunked writes avoid memory blowups.
-- For high throughput, use bulk inserts with conflict handling (Postgres `ON CONFLICT DO UPDATE`).
+### Idempotent ingestion — the most important design decision
 
-### Observability and testing
+The aggregator runs on a schedule. Network is unreliable. Sources have partial failures. The pipeline must be safe to re-run at any time without creating duplicates or losing data:
 
-- Aggregator logs each fetch, success, and failure with contextual metadata (source, job id, elapsed time).
-- I add metrics (counts, latencies) exported to Prometheus and alerts for job failures or schema drift.
-- Unit tests for adapter parsing, and integration tests that use recorded source payloads to ensure normalization correctness.
+```python
+def ingest_item(source: Source, raw: RawItem, db: Database) -> None:
+    dedupe_key = source.adapter.make_dedupe_key(raw)
+    normalized = source.adapter.normalize(raw)
+    content_hash = sha256(json.dumps(normalized, sort_keys=True))
+    
+    with db.transaction():
+        existing = db.fetchone(
+            "SELECT id, hash FROM aggregated_records "
+            "WHERE source_id = %s AND dedupe_key = %s",
+            (source.id, dedupe_key)
+        )
+        
+        if existing is None:
+            # New record
+            db.execute("INSERT INTO aggregated_records ...")
+        elif existing.hash != content_hash:
+            # Content changed — update, don't duplicate
+            db.execute(
+                "UPDATE aggregated_records SET payload = %s, hash = %s, "
+                "normalized_at = NOW() WHERE id = %s",
+                (normalized, content_hash, existing.id)
+            )
+        # else: identical content, skip (fast path)
+```
 
-### Operational design — deployment, CI/CD, monitoring
+The `content_hash` comparison is what makes this truly idempotent. Not just deduplication by key, but deduplication by *content* — so re-ingesting unchanged records is effectively a no-op.
 
-- **Containerize services** for stable builds (Docker).
-- **CI pipelines** run linters, unit tests, and then build artifacts. Mobile CI runs unit tests and optionally builds debug bundles; release builds require secrets in CI or manual runs through fastlane.
-- **Centralized logging** and error tracking: Sentry for exceptions, Prometheus/Grafana for metrics, structured logs for business events.
-- **Release practices**: migrations are deployed in a safe sequence (apply migrations, deploy service that uses new schema) and I use feature flags for risky behavior.
+---
 
-## Key technical challenges I faced and how I fixed them
+## Operational Design
 
-**1. Schema drift in aggregator sources**
+### Observability from day one
 
-- **Problem**: external sources changed their JSON structure and the parser started failing.
-- **Remedy**: add schema validation with expressive tests (sample payloads committed to repo) and alerting when a source’s parsing error rate spikes. Also added a lightweight adapter test harness to validate a new schema before enabling production runs.
+I didn't add metrics "later." Each pipeline run logs structured JSON:
 
-**2. Mobile-startup latency**
+```python
+logger.info("ingest.complete", extra={
+    "source": source.name,
+    "fetched": fetched_count,
+    "inserted": inserted_count,
+    "updated": updated_count,
+    "skipped": skipped_count,
+    "duration_ms": elapsed,
+    "error_rate": errors / fetched_count,
+})
+```
 
-- **Problem**: app took too long on first run due to heavy parsing.
-- **Remedy**: defer non-critical work, lazily load large resources, and parse in a background job with progress UI. Also cached parsed blobs in local storage.
+Structured logs are queryable. When something breaks, I can filter by `source`, join on `error_rate > 0.1`, and immediately know which adapter is failing and why.
 
-**3. Native build and signing headaches**
+### Retry strategy
 
-- **Problem**: iOS signing and provisioning errors during releases.
-- **Remedy**: automated with Fastlane and CI secrets to streamline certificate deployment and avoided manual steps.
+Third-party APIs fail. My retry logic is exponential backoff with jitter — not naive linear retry:
 
-**4. Duplicate aggregated records**
+```python
+def with_retry(fn, max_retries=3, base_delay=1.0):
+    for attempt in range(max_retries):
+        try:
+            return fn()
+        except (RequestError, RateLimitError) as e:
+            if attempt == max_retries - 1:
+                raise
+            # Exponential backoff + jitter to prevent thundering herd
+            delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+            time.sleep(delay)
+```
 
-- **Problem**: overlaps across feeds created duplicates.
-- **Remedy**: introduced a deterministic `dedupe_key` and unique constraint on `(source_id, dedupe_key)`, plus content hashing to detect updates.
+The jitter is not an afterthought. When multiple adapters fail simultaneously (source goes down) and all retry at the same time, they cause a thundering herd that overwhelms both the source and your own infrastructure. Jitter distributes the retry load.
 
-**5. Flaky third-party APIs**
+---
 
-- **Problem**: intermittent failures and rate-limiting.
-- **Remedy**: retry strategy with exponential backoff and jitter, and fallback to cached records when absolute freshness is not required.
+## What the split cost me vs. what it earned me
 
-## What this project demonstrates about my engineering style
+**Cost**: Three separate Docker images. Three separate test suites. Three `.env` files. More CI configuration.
 
-- I favor **clear separation of concerns** and pragmatic systems thinking: isolate heavyweight tasks (ETL) from user-facing components (API, mobile app).
-- I design for **observability and resiliency** up front: logging, metrics, retries, and idempotency are in the core design.
-- I write code meant to be **comprehensible** — small, testable modules backed by types and schema checks.
-- I choose technologies to **minimize friction**: TypeScript for maintainability in UI, Python for ETL productivity, Postgres for reliable JSON support and transactional semantics.
+**Earned**: The aggregator crashed twice during development due to memory issues processing large XML feeds. The API stayed up. Users saw slightly stale data — not errors. That's the value of the split.
 
-### Concrete examples of my craft
+When the Gopher Go migration had a bug in the Node.js microservice at my day job, we isolated it to one service and hotfixed it without touching the React Native client or any other service. Same principle, same benefit.
 
-- **Thoughtful TypeScript types** and normalization functions to guarantee client-side data shape.
-- **Database schemas** that balance JSON flexibility (JSONB) with relational indexes for querying speed.
-- **Idempotent ingestion logic** that ensures safe retries and updates.
-- **CI and release automation** to reduce manual human errors and speed iteration.
-
-## Next steps I’d take if this grows
-
-- Add contract tests between `thin` and `thin_be` (e.g., Pact or OpenAPI-based tests).
-- Expand end‑to‑end tests across device farm runs to catch platform specific regressions.
-- Introduce read replicas or caching layers (Redis) for high-read APIs.
-- Implement blue/green deployments and gradual rollouts for the backend.
-
-## Closing
-
-**Thin** is a compact system that prioritizes clarity, correctness and operational resilience. Building it made me confront the real problems that show up in production — flaky data sources, device diversity, and deployment complexity — and I tackled them with practical engineering patterns: types, tests, idempotency, and automation.
+Separation of concerns is not an academic principle. It's a reliability strategy.
