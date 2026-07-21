@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Github, Linkedin, Mail } from "lucide-react";
+import { Github, Linkedin } from "lucide-react";
+import { StackOverflow } from "@/components/icons";
 
 export function Footer() {
   return (
@@ -36,6 +37,15 @@ export function Footer() {
               aria-label="LinkedIn"
             >
               <Linkedin className="h-4 w-4" />
+            </Link>
+            <Link
+              href="https://stackoverflow.com/users/12255214/blatzo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors p-2 bg-muted/50 rounded-md border border-border/50"
+              aria-label="StackOverflow"
+            >
+              <StackOverflow className="h-4 w-4" />
             </Link>
           </div>
         </div>

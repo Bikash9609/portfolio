@@ -6,11 +6,11 @@ import { motion } from "framer-motion";
 import {
   Github,
   Linkedin,
-  Mail,
   Download,
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
+import { StackOverflow } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 const fadeUp = {
@@ -174,6 +174,7 @@ export default function Home() {
           <div className="flex gap-2">
             <Link href="https://github.com/Bikash9609" className="text-muted-foreground hover:text-foreground transition-colors p-1.5 bg-muted rounded-md"><Github className="w-4 h-4" /></Link>
             <Link href="https://www.linkedin.com/in/bikash-t-35ab48179/" className="text-muted-foreground hover:text-foreground transition-colors p-1.5 bg-muted rounded-md"><Linkedin className="w-4 h-4" /></Link>
+            <Link href="https://stackoverflow.com/users/12255214/blatzo" className="text-muted-foreground hover:text-foreground transition-colors p-1.5 bg-muted rounded-md"><StackOverflow className="w-4 h-4" /></Link>
           </div>
         </motion.div>
 
