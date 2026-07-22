@@ -59,7 +59,6 @@ export function Header() {
           {navItems.map((item) => {
             const isMailto = item.href.startsWith('mailto:');
             const commonProps = {
-              key: item.href,
               className: cn(
                 "relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                 pathname === item.href || (pathname === '/' && item.href === '/#work')
@@ -69,11 +68,11 @@ export function Header() {
             };
             
             return isMailto ? (
-              <a href={item.href} {...commonProps}>
+              <a key={item.href} href={item.href} {...commonProps}>
                 {item.name}
               </a>
             ) : (
-              <Link href={item.href} {...commonProps}>
+              <Link key={item.href} href={item.href} {...commonProps}>
                 {item.name}
               </Link>
             );
@@ -119,7 +118,6 @@ export function Header() {
               {navItems.map((item) => {
                 const isMailto = item.href.startsWith('mailto:');
                 const commonProps = {
-                  key: item.href,
                   onClick: () => setIsOpen(false),
                   className: cn(
                     "px-4 py-3 text-sm font-medium rounded-md transition-colors",
@@ -130,11 +128,11 @@ export function Header() {
                 };
 
                 return isMailto ? (
-                  <a href={item.href} {...commonProps}>
+                  <a key={item.href} href={item.href} {...commonProps}>
                     {item.name}
                   </a>
                 ) : (
-                  <Link href={item.href} {...commonProps}>
+                  <Link key={item.href} href={item.href} {...commonProps}>
                     {item.name}
                   </Link>
                 );
