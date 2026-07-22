@@ -105,10 +105,13 @@ const projects = [
 ];
 
 const capabilities = [
-  { label: "Frontend", tools: "React, Next.js, TypeScript, Tailwind" },
-  { label: "Backend", tools: "Node.js, Fastify, Python, REST/GraphQL" },
-  { label: "Data & Infra", tools: "PostgreSQL, Redis, Docker, AWS" },
-  { label: "AI Systems", tools: "LangGraph, RAG, Ollama, Vector DBs" },
+  { label: "Core Engineering", tools: "Performance engineering, System design, API design, Event-driven architecture, Integration design, Distributed systems, Scalability, Reliability, Observability, Cross-environment compatibility, Architectural reviews" },
+  { label: "Frontend", tools: "React, Next.js, Redux, TypeScript, GraphQL, TanStack, TanStack Virtual, Web Workers, Accessibility, Web Vitals, UI performance optimization" },
+  { label: "Backend", tools: "Node.js, Express, Fastify, REST APIs, GraphQL APIs, Microservices, Monorepos, Serverless architectures, Performance tuning" },
+  { label: "Data", tools: "PostgreSQL, MySQL, MongoDB, DynamoDB, Redis, Data modeling, Indexing, Query optimization, Vector databases" },
+  { label: "Cloud & Platform", tools: "AWS, Azure, GCP, Kubernetes, Docker, Lambda, EC2, S3, GitHub Actions, CI/CD pipelines, Monitoring, Logging, Tracing, Infrastructure as code" },
+  { label: "AI & Developer Tooling", tools: "RAG, LangChain, LangGraph, Ollama, LLM workflows, Prompt engineering, Context management, Claude, Cursor, GitHub Copilot" },
+  { label: "Testing & Security", tools: "Jest, Vitest, Cypress, BDD, TDD, Test automation, End-to-end testing, OAuth, OAuth 2.0, JWT, OWASP Top 10, Secure coding, Access control, Data privacy" },
 ];
 
 export default function Home() {
@@ -254,10 +257,11 @@ export default function Home() {
         </motion.div>
 
         {/* Experience Timeline */}
-        <motion.div variants={fadeUp} custom={10} className="bento-card md:col-span-7">
-          <div className="flex justify-between items-center mb-6">
-             <h2 className="text-xl font-heading font-bold">Experience</h2>
-             <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" asChild>
+        <motion.div variants={fadeUp} custom={10} className="bento-card md:col-span-7 bg-primary/5 ring-1 ring-primary/20 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+          <div className="flex justify-between items-center mb-6 relative z-10">
+             <h2 className="text-xl font-heading font-bold text-primary">Experience</h2>
+             <Button variant="default" size="sm" className="h-8 text-xs gap-1 rounded-none shadow-sm" asChild>
                <a href="/resume.pdf" download="Bikash_Tiwari_Resume.pdf">
                  Full Resume <Download className="w-3 h-3" />
                </a>
@@ -280,13 +284,18 @@ export default function Home() {
       </section>
 
       {/* ── Section 4: Expertise Strip ── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0">
+      <section className="grid grid-cols-1 gap-0">
+        <div className="bento-card bg-primary/5 ring-1 ring-primary/20">
+          <h2 className="text-xl font-heading font-bold text-primary">Technical Skills & Expertise</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
           {capabilities.map((cap, i) => (
-            <motion.div key={cap.label} variants={fadeUp} custom={11 + i} className="bento-card flex flex-col justify-center">
-              <h3 className="text-sm font-bold text-foreground mb-1">{cap.label}</h3>
-              <p className="text-sm text-muted-foreground">{cap.tools}</p>
+            <motion.div key={cap.label} variants={fadeUp} custom={11 + i} className="bento-card flex flex-col justify-start">
+              <h3 className="text-sm font-bold text-foreground mb-2">{cap.label}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{cap.tools}</p>
             </motion.div>
           ))}
+        </div>
       </section>
 
       {/* ── Section 5: Writing / OSS ── */}

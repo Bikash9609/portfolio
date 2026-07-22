@@ -31,12 +31,23 @@ export function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300 bento-card !p-0 !rounded-none",
+        "sticky top-0 z-50 w-full transition-all duration-300 bento-card !p-0 !rounded-none flex flex-col",
         scrolled
           ? "bg-background/80 backdrop-blur-xl"
           : "bg-background/80 backdrop-blur-xl"
       )}
     >
+      {/* Availability Banner */}
+      <div className="w-full bg-primary/10 border-b border-primary/20 px-4 py-2 text-center flex items-center justify-center gap-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+        </span>
+        <p className="text-xs sm:text-sm font-medium text-foreground">
+          Looking for a thorough engineer? <span className="text-muted-foreground">Open to remote full-time and contract roles.</span>
+        </p>
+      </div>
+
       <div className="w-full flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
