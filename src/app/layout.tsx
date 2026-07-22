@@ -65,7 +65,7 @@ export default function RootLayout({
           <MouseTracker />
           <BackgroundWatermark />
           <Header />
-          <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full border-x border-border relative z-10 pt-8 pb-12">
+          <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full border-x border-border relative z-10">
             {children}
           </main>
           <Footer />

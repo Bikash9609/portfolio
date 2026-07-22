@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, Star, GitFork } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -42,9 +41,9 @@ export function GithubLiveFeed({ limit }: { limit?: number }) {
 
   if (loading) {
     return (
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 animate-pulse mt-8">
+      <div className="grid gap-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 animate-pulse">
         {[...Array(limit || 6)].map((_, i) => (
-          <div key={i} className="h-48 bg-muted rounded-xl border border-border" />
+          <div key={i} className="h-48 bg-muted rounded-none border border-border m-[-1px_0_0_-1px]" />
         ))}
       </div>
     );
@@ -59,32 +58,33 @@ export function GithubLiveFeed({ limit }: { limit?: number }) {
   }
 
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-8">
+    <div className="grid gap-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {repos.map((repo, i) => (
         <motion.div
           key={repo.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.1 }}
+          className="flex"
         >
-          <Card className="h-full flex flex-col hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-3">
+          <div className="bento-card flex-1 flex flex-col w-full h-full">
+            <div className="pb-3">
               <div className="flex justify-between items-start gap-2">
-                <CardTitle className="text-lg line-clamp-1 truncate" title={repo.name}>{repo.name}</CardTitle>
+                <h3 className="text-lg font-heading font-bold line-clamp-1 truncate" title={repo.name}>{repo.name}</h3>
                 <a href={repo.html_url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0">
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
-              <CardDescription className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 Updated {new Date(repo.updated_at).toLocaleDateString()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 pb-3">
+              </p>
+            </div>
+            <div className="flex-1 pb-4">
               <p className="text-sm text-muted-foreground line-clamp-3">
                 {repo.description || "No description provided."}
               </p>
-            </CardContent>
-            <CardFooter className="pt-0 flex items-center justify-between text-xs text-muted-foreground">
+            </div>
+            <div className="pt-0 flex items-center justify-between text-xs text-muted-foreground mt-auto">
               <div className="flex items-center space-x-4">
                 {repo.language && (
                   <span className="flex items-center gap-1">
@@ -103,8 +103,8 @@ export function GithubLiveFeed({ limit }: { limit?: number }) {
                   </span>
                 )}
               </div>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         </motion.div>
       ))}
     </div>
