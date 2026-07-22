@@ -9,35 +9,27 @@ const skills = [
   "TailwindCSS", "Kafka", "Microservices", "System Design"
 ];
 
-// Helper to get random positions, we use fixed random seeds per index so hydration matches
-const getPos = (index: number) => {
-  const seed1 = (index * 137) % 100;
-  const seed2 = (index * 251) % 100;
-  return { left: `${seed1}%`, top: `${seed2}%` };
-};
-
 export function BackgroundWatermark() {
+  // Repeat the skills array enough times to densely fill the screen
+  const repeatedSkills = Array(40).fill(skills).flat();
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-[0.03] dark:opacity-[0.02]">
-      {skills.map((skill, i) => {
-        const { left, top } = getPos(i);
-        return (
-          <motion.div
-            key={skill}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: i * 0.1, duration: 1 }}
-            className="absolute text-4xl sm:text-6xl md:text-8xl font-heading font-black whitespace-nowrap text-foreground select-none"
-            style={{
-              left,
-              top,
-              transform: `translate(-50%, -50%) rotate(${(i % 3 - 1) * 15}deg)`,
-            }}
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-[0.04] dark:opacity-[0.03]">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.5 }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] sm:w-[120vw] h-[150vh] flex flex-wrap gap-x-3 gap-y-2 justify-center content-center -rotate-12"
+      >
+        {repeatedSkills.map((skill, i) => (
+          <span 
+            key={`${skill}-${i}`} 
+            className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground whitespace-nowrap select-none"
           >
-            {skill}
-          </motion.div>
-        );
-      })}
+            {skill} <span className="opacity-40 mx-1 text-sm">•</span>
+          </span>
+        ))}
+      </motion.div>
     </div>
   );
 }
