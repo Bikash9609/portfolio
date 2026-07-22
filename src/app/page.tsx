@@ -117,10 +117,10 @@ export default function Home() {
       variants={stagger}
       initial="hidden"
       animate="show"
-      className="space-y-4 md:space-y-6 pb-12"
+      className="flex flex-col"
     >
       {/* ── Section 1: Hero Bento ── */}
-      <section className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-12 gap-0">
         {/* Intro Card */}
         <motion.div
           variants={fadeUp}
@@ -140,10 +140,10 @@ export default function Home() {
           </div>
           
           <div className="flex flex-wrap gap-3 mt-4">
-            <Button className="rounded-lg h-10 px-5 text-sm" asChild>
+            <Button className="rounded-none h-10 px-5 text-sm" asChild>
               <Link href="#work">View selected work</Link>
             </Button>
-            <Button variant="outline" className="rounded-lg h-10 px-5 text-sm" asChild>
+            <Button variant="outline" className="rounded-none h-10 px-5 text-sm" asChild>
               <a href="mailto:bikashtiwari020@gmail.com">Contact me</a>
             </Button>
           </div>
@@ -198,9 +198,11 @@ export default function Home() {
       </section>
 
       {/* ── Section 2: Selected Work Grid ── */}
-      <section id="work" className="pt-8">
-        <h2 className="text-xl font-heading font-bold mb-4">Selected Work</h2>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <section id="work" className="grid grid-cols-1 gap-0">
+        <div className="bento-card">
+          <h2 className="text-xl font-heading font-bold">Selected Work</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
           {projects.map((p, i) => (
             <motion.div
               key={p.title}
@@ -233,7 +235,7 @@ export default function Home() {
       </section>
 
       {/* ── Section 3: Philosophy & Experience ── */}
-      <section className="pt-8 grid grid-cols-1 md:grid-cols-12 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-12 gap-0">
         {/* Philosophy */}
         <motion.div variants={fadeUp} custom={9} className="bento-card md:col-span-5 flex flex-col gap-4">
           <h2 className="text-xl font-heading font-bold">Engineering Philosophy</h2>
@@ -278,19 +280,17 @@ export default function Home() {
       </section>
 
       {/* ── Section 4: Expertise Strip ── */}
-      <section className="pt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0">
           {capabilities.map((cap, i) => (
             <motion.div key={cap.label} variants={fadeUp} custom={11 + i} className="bento-card flex flex-col justify-center">
               <h3 className="text-sm font-bold text-foreground mb-1">{cap.label}</h3>
               <p className="text-sm text-muted-foreground">{cap.tools}</p>
             </motion.div>
           ))}
-        </div>
       </section>
 
       {/* ── Section 5: Writing / OSS ── */}
-      <section className="pt-8">
+      <section className="grid grid-cols-1 gap-0">
          <motion.div variants={fadeUp} custom={15} className="bento-card relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex-1">
               <h2 className="text-xl font-heading font-bold mb-2">Writing & Experiments</h2>
@@ -298,17 +298,17 @@ export default function Home() {
                 Deep dives into LangGraph agents, Rust pipelines, React architecture, and production lessons. I write about systems, tools, and the decisions between them.
               </p>
             </div>
-            <Button variant="outline" className="shrink-0 gap-2 rounded-lg" asChild>
+            <Button variant="outline" className="shrink-0 gap-2 rounded-none" asChild>
                <Link href="/blog">Read the blog <ArrowRight className="w-4 h-4" /></Link>
             </Button>
          </motion.div>
       </section>
 
       {/* ── Section 6: GitHub Activity ── */}
-      <section className="pt-8">
-        <div className="flex justify-between items-center mb-4">
+      <section className="grid grid-cols-1 gap-0">
+        <div className="bento-card flex justify-between items-center">
           <h2 className="text-xl font-heading font-bold">Recent Commits & Activity</h2>
-          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" asChild>
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 rounded-none" asChild>
              <Link href="/projects/github">
                View All <ArrowRight className="w-3 h-3" />
              </Link>

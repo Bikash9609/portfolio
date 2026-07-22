@@ -144,10 +144,11 @@
 
 .bento-card {
   background: hsl(var(--card));
-  border: 1px solid hsl(var(--border) / 0.8);
-  border-radius: var(--radius-xl);
+  border: 1px solid hsl(var(--border));
+  border-radius: 0;
   padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  margin: -1px 0 0 -1px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   position: relative;
   overflow: hidden;
 }
@@ -180,8 +181,7 @@
 
 .bento-card:hover {
   border-color: hsl(var(--border));
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  background-color: hsl(var(--border) / 0.2);
 }
 
 /* Torch Effect Text */
@@ -201,7 +201,7 @@
 }
 
 .dark .bento-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  background-color: hsl(var(--border) / 0.2);
 }
 
 .bento-card.featured {
