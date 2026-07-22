@@ -35,9 +35,9 @@ export default function AboutPage() {
       variants={stagger}
       initial="hidden"
       animate="show"
-      className="space-y-8 max-w-2xl"
+      className="flex flex-col w-full"
     >
-      <motion.section variants={fadeUp} custom={0} className="space-y-4">
+      <motion.section variants={fadeUp} custom={0} className="bento-card flex flex-col space-y-4">
         <h1 className="text-2xl font-bold font-heading tracking-tight">
           About me
         </h1>
@@ -67,12 +67,12 @@ export default function AboutPage() {
         </div>
       </motion.section>
 
-      <motion.section variants={fadeUp} custom={1} className="space-y-4">
-        <div className="flex items-center gap-2">
+      <motion.section variants={fadeUp} custom={1} className="flex flex-col">
+        <div className="bento-card flex items-center gap-2">
           <Cpu className="h-4 w-4 text-primary" />
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-medium">How I approach technology</h2>
         </div>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
           {[
             {
               q: "SQL or NoSQL?",
@@ -99,12 +99,12 @@ export default function AboutPage() {
         </div>
       </motion.section>
 
-      <motion.section variants={fadeUp} custom={2} className="space-y-4">
-        <div className="flex items-center gap-2">
+      <motion.section variants={fadeUp} custom={2} className="flex flex-col">
+        <div className="bento-card flex items-center gap-2">
           <Github className="h-4 w-4 text-primary" />
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-medium">Recent activity</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
           {latestProjects.map((p) => (
             <Link key={p.name} href={p.href} target="_blank" rel="noopener noreferrer" className="block group">
               <div className="bento-card h-full space-y-1.5">
@@ -119,8 +119,8 @@ export default function AboutPage() {
         </div>
       </motion.section>
 
-      <motion.section variants={fadeUp} custom={3} className="space-y-4">
-        <div className="flex items-center gap-2">
+      <motion.section variants={fadeUp} custom={3} className="flex flex-col">
+        <div className="bento-card flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-primary" />
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-medium">Education</h2>
         </div>

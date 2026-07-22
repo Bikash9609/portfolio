@@ -8,8 +8,8 @@ export default function BlogPage() {
   const posts = getAllPosts();
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div className="space-y-1">
+    <div className="flex flex-col w-full">
+      <div className="bento-card space-y-1">
         <div className="flex items-center gap-2 mb-3">
           <PenLine className="h-4 w-4 text-primary" />
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Writing</p>
@@ -21,7 +21,7 @@ export default function BlogPage() {
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-0">
         {posts.map((post) => (
           <Link key={post.slug} href={`/blog/${post.slug}`} className="block group">
             <div className="bento-card flex flex-col gap-4 overflow-hidden p-0">

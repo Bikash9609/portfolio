@@ -64,11 +64,14 @@ export default function RootLayout({
         >
           <MouseTracker />
           <BackgroundWatermark />
-          <Header />
-          <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full border-x border-border relative z-10">
-            {children}
-          </main>
-          <Footer />
+          <div className="flex flex-col min-h-screen max-w-screen-lg mx-auto w-full border-x border-border relative z-10">
+            <Header />
+            <main className="flex-1 flex flex-col w-full">
+              {children}
+            </main>
+            <div className="bento-card h-24 sm:h-32 w-full" aria-hidden="true" />
+            <Footer />
+          </div>
         </ThemeProvider>
       </body>
     </html>

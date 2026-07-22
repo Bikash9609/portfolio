@@ -31,13 +31,13 @@ export function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300",
+        "sticky top-0 z-50 w-full transition-all duration-300 bento-card !p-0 !rounded-none",
         scrolled
-          ? "border-b bg-background/80 backdrop-blur-xl shadow-sm"
-          : "bg-transparent"
+          ? "bg-background/80 backdrop-blur-xl"
+          : "bg-background/80 backdrop-blur-xl"
       )}
     >
-      <div className="max-w-screen-lg mx-auto w-full flex h-16 items-center justify-between px-4">
+      <div className="w-full flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative h-8 w-8 overflow-hidden rounded-full border border-border group-hover:border-primary/50 transition-colors">

@@ -4,8 +4,8 @@ import { StackOverflow } from "@/components/icons";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-background/30 backdrop-blur-sm py-12 mt-12">
-      <div className="max-w-screen-lg mx-auto w-full px-4">
+    <footer className="bento-card !rounded-none">
+      <div className="w-full">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <p className="text-base font-heading font-bold text-foreground">
