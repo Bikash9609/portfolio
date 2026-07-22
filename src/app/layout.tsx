@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { BackgroundWatermark } from "@/components/BackgroundWatermark";
 
 export const metadata: Metadata = {
   title: "Bikash Tiwari — Senior Full-Stack & AI Engineer",
@@ -47,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,301,701,300,501,401,901,400&f[]=boska@900,700,500,301,701,300,501,401,901,400&display=swap" rel="stylesheet" />
+        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&f[]=cabinet-grotesk@900,800,700,500,400&display=swap" rel="stylesheet" />
       </head>
       <body
         className={cn(
@@ -60,8 +61,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <BackgroundWatermark />
           <Header />
-          <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full px-4 py-8 md:py-12">
+          <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full px-4 py-8 md:py-12 relative z-10">
             {children}
           </main>
           <Footer />

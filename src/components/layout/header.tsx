@@ -15,7 +15,6 @@ const navItems = [
   { name: "Work", href: "/#work" },
   { name: "About", href: "/about" },
   { name: "Writing", href: "/blog" },
-  { name: "Contact", href: "mailto:bikashtiwari020@gmail.com" },
 ];
 
 export function Header() {
@@ -79,8 +78,16 @@ export function Header() {
               </Link>
             );
           })}
-          <div className="ml-2 pl-2 border-l border-border/50">
-            <ModeToggle />
+          <div className="flex items-center gap-2 ml-4 border-l border-border/50 pl-4">
+            <Button variant="ghost" className="h-9 px-4 text-sm font-medium" asChild>
+              <a href="/resume.pdf" download="Bikash_Tiwari_Resume.pdf">Resume</a>
+            </Button>
+            <Button className="h-9 px-4 text-sm font-medium" asChild>
+              <a href="mailto:bikashtiwari020@gmail.com">Contact</a>
+            </Button>
+            <div className="ml-2">
+              <ModeToggle />
+            </div>
           </div>
         </nav>
 
@@ -132,6 +139,14 @@ export function Header() {
                   </Link>
                 );
               })}
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border/50">
+                <Button variant="outline" className="w-full justify-center" asChild>
+                  <a href="/resume.pdf" download="Bikash_Tiwari_Resume.pdf">Resume</a>
+                </Button>
+                <Button className="w-full justify-center" asChild>
+                  <a href="mailto:bikashtiwari020@gmail.com">Contact</a>
+                </Button>
+              </div>
             </nav>
           </motion.div>
         )}

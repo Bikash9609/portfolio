@@ -4,7 +4,7 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-heading: 'Boska', serif;
+  --font-heading: 'Cabinet Grotesk', sans-serif;
   --font-sans: 'Satoshi', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
