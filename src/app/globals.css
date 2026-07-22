@@ -152,10 +152,52 @@
   overflow: hidden;
 }
 
+/* Torch Effect Border */
+.bento-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px; /* border thickness */
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+    hsl(var(--primary) / 0.8),
+    transparent 40%
+  ) fixed;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.bento-card:hover::before {
+  opacity: 1;
+}
+
 .bento-card:hover {
   border-color: hsl(var(--border));
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* Torch Effect Text */
+.bento-card:hover h1,
+.bento-card:hover h2,
+.bento-card:hover h3,
+.bento-card:hover h4 {
+  background: radial-gradient(
+    400px circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+    hsl(var(--primary)),
+    hsl(var(--foreground)) 60%
+  ) fixed;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .dark .bento-card:hover {

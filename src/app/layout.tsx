@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { BackgroundWatermark } from "@/components/BackgroundWatermark";
+import { MouseTracker } from "@/components/MouseTracker";
 
 export const metadata: Metadata = {
   title: "Bikash Tiwari — Senior Full-Stack & AI Engineer",
@@ -61,6 +62,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <MouseTracker />
           <BackgroundWatermark />
           <Header />
           <main className="flex-1 flex flex-col max-w-screen-lg mx-auto w-full px-4 py-8 md:py-12 relative z-10">

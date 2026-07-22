@@ -1878,6 +1878,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"TagCloud@npm:^2.5.0":
+  version: 2.5.0
+  resolution: "TagCloud@npm:2.5.0"
+  checksum: 10c0/4417fde731c114adac07b6a736e72da1bd75bc3d979f54cc767c55e857cc1da277ec6ef616b0bd70530f9f29eac78b29df5c1efb57b2e5724f083340d07b27a7
+  languageName: node
+  linkType: hard
+
 "acorn-jsx@npm:^5.0.0, acorn-jsx@npm:^5.3.2":
   version: 5.3.2
   resolution: "acorn-jsx@npm:5.3.2"
@@ -5136,6 +5143,7 @@ __metadata:
     "@types/node": "npm:^20"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
+    TagCloud: "npm:^2.5.0"
     babel-plugin-react-compiler: "npm:1.0.0"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
