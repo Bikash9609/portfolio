@@ -131,7 +131,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-base;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   ::selection {
@@ -240,4 +240,11 @@
   border: none;
   padding: 0;
   color: inherit;
+}
+
+.text-sm.text-muted-foreground,
+.text-xs.text-muted-foreground,
+.text-base.text-muted-foreground {
+  font-size: 1.125rem;
+  line-height: 1.75;
 }

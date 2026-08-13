@@ -43,25 +43,25 @@ export default function AboutPage() {
         </h1>
         <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
           <p>
-            I&apos;m Bikash — a Senior Full-Stack Engineer based in Ranchi, Jharkhand. 5+ years building systems that 
-            need to actually work under production conditions: sub-2s APIs, non-blocking renders, reliable ETL pipelines, 
+            I&apos;m Bikash — a Senior Full-Stack Engineer based in India. 5+ years building systems that
+            need to actually work under production conditions: sub-2s APIs, non-blocking renders, reliable ETL pipelines,
             and more recently, agentic AI systems that reason instead of just retrieve.
           </p>
           <p>
-            My background is in JavaScript/TypeScript across the stack — React, Next.js, Node.js, Fastify — but I reach for 
-            Python when I&apos;m doing data work or building AI pipelines, and Rust when a hot path in Node.js becomes 
+            My background is in JavaScript/TypeScript across the stack — React, Next.js, Node.js, Fastify — but I reach for
+            Python when I&apos;m doing data work or building AI pipelines, and Rust when a hot path in Node.js becomes
             a throughput bottleneck. The choice of tool is always deliberate.
           </p>
           <p>
-            I&apos;ve worked on products ranging from enterprise carbon-emission analysis platforms (thousands of daily users, 
-            heavy datasets, custom spreadsheets in React) to cross-platform mobile apps with Python ETL aggregators to 
-            community forums to Chrome extensions. The variety is intentional — I learn more from different problem domains 
+            I&apos;ve worked on products ranging from enterprise carbon-emission analysis platforms (thousands of daily users,
+            heavy datasets, custom spreadsheets in React) to cross-platform mobile apps with Python ETL aggregators to
+            community forums to Chrome extensions. The variety is intentional — I learn more from different problem domains
             than from depth in a single one.
           </p>
           <p>
             The thing I care about most is{" "}
-            <span className="text-foreground font-medium">architecture that ages well</span>. Not clever code. 
-            Not code that impresses in a PR review. Code that a new engineer can onboard on in a day, 
+            <span className="text-foreground font-medium">architecture that ages well</span>. Not clever code.
+            Not code that impresses in a PR review. Code that a new engineer can onboard on in a day,
             that a future you can maintain without archaeology, and that fails gracefully when it does fail.
           </p>
         </div>

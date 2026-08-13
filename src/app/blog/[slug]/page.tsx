@@ -36,7 +36,7 @@ export default async function BlogPost({
     ),
     p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
       <p
-        className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground"
+        className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-lg"
         {...props}
       />
     ),
@@ -48,13 +48,13 @@ export default async function BlogPost({
     ),
     ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
       <ul
-        className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground"
+        className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground text-lg"
         {...props}
       />
     ),
     ol: (props: React.HTMLAttributes<HTMLOListElement>) => (
       <ol
-        className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground"
+        className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground text-lg"
         {...props}
       />
     ),
@@ -63,7 +63,7 @@ export default async function BlogPost({
     ),
     blockquote: (props: React.BlockquoteHTMLAttributes<HTMLQuoteElement>) => (
       <blockquote
-        className="mt-6 border-l-2 border-primary pl-6 italic text-muted-foreground"
+        className="mt-6 border-l-2 border-primary pl-6 italic text-muted-foreground text-lg"
         {...props}
       />
     ),
